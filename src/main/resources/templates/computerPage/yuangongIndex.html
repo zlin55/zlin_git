@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.springframework.org/schema/jdbc">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>首页</title>
+    <link rel="stylesheet" th:href="|${basePath}/static/css/reset.css|" media="all" />
+    <link rel="stylesheet" th:href="|${basePath}/static/css/demo/font-awesome.min.css|" media="all" />
+    <link rel="stylesheet" th:href="|${basePath}/static/css/jingzfp.css|" media="all" />
+    <link rel="stylesheet" th:href="|${basePath}/static/layui/css/layui.css|" media="all" />
+    <script th:src="|${basePath}/static/js/jquery.min.js?v=2.1.4|"></script>
+    <script type="text/javascript" th:src="|${basePath}/static/layui/layui.js|"></script>
+    <script type="text/javascript" th:src="|${basePath}/static//js/echarts.min.js|"></script>
+</head>
+<body class="body-fp">
+
+<ul class="tj-wrapper flex flex_wrap flex_jb">
+    <li>
+        <div class="fp-wrapper tj-sr-wrap">
+            <div class="fp-wra-h flex flex_jb flex_ac">
+                <h5>总体情况
+                    <a href="javascript:void(0);"  class="a_thisyear active_lin"   data="1">当日</a>
+                    <a href="javascript:void(0);"  data="2"class="a_thisyear">当月</a>
+                    <a  class="a_thisyear" href="javascript:void(0);"  data="3"> 上个月</a>
+                </h5>
+            </div>
+            <div class="fp-wra-lbc">
+                <ul class="data-tj flex flex_wrap flex_jb">
+                    <li class="data-tj-bg1">
+                        <p class="data-tj-count"><span id="SpendMoney" > 0</span>元</p>
+                        <h5 class="data-tj-title">购买花费</h5>
+                    </li>
+                    <li class="data-tj-bg2">
+                         <p class="data-tj-count"><span id="NumCom">0 </span>台</p>
+                        <h5 class="data-tj-title">收入电脑</h5>
+                    </li>
+                    <li class="data-tj-bg3">
+                        <p class="data-tj-count"><span   >花最少的</span>钱</p>
+                        <h5 class="data-tj-title">你可以做到</h5>
+                    </li>
+                    <li class="data-tj-bg4">
+                        <p class="data-tj-count"><span   >售最多的</span>本</p>
+                        <h5 class="data-tj-title">加油加油</h5>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </li>
+    <li>
+
+
+        <div class="fp-wrapper tj-sr-wrap">
+            <div class="fp-wra-h flex flex_jb flex_ac">
+                <h5>我今天收到的电脑
+                    <a href="javascript:void(0);" class="a_yingli active_yingli" data="1">今年</a>
+                    <a href="javascript:void(0);" class="a_yingli " data="2">去年</a>
+                </h5>
+
+            </div>
+            <div class="tj-wra-data flex flex_jc flex_ac">
+                <div id="liRunmain" style="height:350px;width:600px"></div>
+            </div>
+        </div>
+
+    </li>
+
+
+</ul>
+
+</div><!--container-kb-->
+
+<script>
+    //初始化数据
+    yingLi("1");
+    getPersonData("1");
+    $('.a_yingli ').on('click', function(){
+        $(this).addClass('active_yingli').siblings().removeClass('active_yingli');
+        var dayStyle =$(this).attr("data");
+        yingLi(dayStyle);
+    })
+    //小标签的作用
+    $('.a_thisyear').on('click', function(){
+        $(this).addClass('active_lin').siblings().removeClass('active_lin');
+        var dayStyle =$(this).attr("data");
+        getPersonData(dayStyle);
+    })
+
+
+
+    function yingLi(data){
+        console.log("yingLi"+data);
+        $.ajax({
+            type: 'POST',
+            url: '[[${basePath}]]/computerInfo/personData',
+            data: {
+                yearStyle : data
+            },
+            dataType: 'json',
+            success: function(data) {
+                var liRun =[];
+                var mouth=[];
+                var lenth=data.list.length;
+                for(var  i=0;i<lenth;i++){
+                    liRun.push(data.list[i].soleNumber) ;
+                    mouth.push(data.list[i].mouth) ;
+                }
+                var myChart = echarts.init(document.getElementById('liRunmain'));
+                var option = {
+                    color: ['#3398DB'],
+                    tooltip : {
+                        trigger: 'axis',
+                        axisPointer : {            // 坐标轴指示器，坐标轴触发有效
+                            type : 'shadow'        // 默认为直线，可选为：
+                        }
+                    },
+                    yAxis : [
+                        {
+                            type : 'value'
+                        }
+                    ],
+                    xAxis : [
+                        {
+                            type : 'category',
+                            data: mouth,
+                            axisTick: {
+                                alignWithLabel: true
+                            }
+                        }
+                    ],
+                    series: [{
+                        name: '盈利(元)',
+                        type: 'bar',
+                        data: liRun
+                    }]
+                };
+                // 使用刚指定的配置项和数据显示图表。
+                myChart.setOption(option);
+            },
+            error: function(data) {
+                alert('出错了，联系老板！');
+
+            },
+        });
+    }
+
+    function  getPersonData(data){
+        console.log("getPersonData"+data);
+        $.ajax({
+            type: 'POST',
+            url: '[[${basePath}]]/computerInfo/personComputerData',
+            data: {
+                daystyle : data
+            },
+            dataType: 'json',
+            success: function(data) {
+                $("#NumCom").text(data.privateNumCom);
+                $("#SpendMoney").text(data.privateSpendMoney);
+            },
+            error: function(data) {
+                alert('出错了，联系老板！');
+
+            },
+        });
+    }
+</script>
+</body>
+</html>

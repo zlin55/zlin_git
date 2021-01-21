@@ -1,0 +1,618 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.zlin.demo.dao.ComputerInfoMapper">
+	<!--数据-->
+	<resultMap id="BaseResultMap" type="cn.zlin.demo.domain.ComputerInfo">
+		<id column="CON_ID" property="conId" jdbcType="DECIMAL" /> <!--电脑id-->
+		<result column="CON_XINGHAO" property="conXinghao" jdbcType="VARCHAR" /> <!--型号-->
+		<result column="COM_CPU" property="comCpu" jdbcType="VARCHAR" /> <!--cpu-->
+		<result column="COM_XIAN_KA" property="comXianKa" jdbcType="VARCHAR" /> <!--显卡-->
+		<result column="COM_NEI_CUN" property="comNeiCun" jdbcType="VARCHAR" /> <!--内存-->
+		<result column="COM_YING_PAN" property="comYingPan" jdbcType="VARCHAR" /> <!--硬盘-->
+		<result column="COM_ZHUANG_TAI" property="comZhuangTai" jdbcType="VARCHAR" /> <!--电脑状态（0 已售 1 退单 2 退货   3 在架 4待付款 ）-->
+		<result column="COM_BAO_YOU" property="comBaoYou" jdbcType="VARCHAR" /> <!--是否包邮)(1 是  0 否)-->
+		<result column="COM_PIN_PAI" property="comPinPai" jdbcType="VARCHAR" /> <!--电脑品牌-->
+		<result column="COM_WAI_GUAN" property="comWaiGuan" jdbcType="VARCHAR" /> <!--外观-->
+		<result column="COM_BUG_PRICE" property="comBugPrice" jdbcType="DOUBLE" /> <!--购买价格-->
+		<result column="COM_SOLE_PRICE" property="comSolePrice" jdbcType="DOUBLE" /> <!--卖出价格-->
+		<result column="CREATE_DATE" property="createDate" jdbcType="TIMESTAMP" /> <!--创建时间-->
+		<result column="CREATE_USER" property="createUser" jdbcType="DECIMAL" /> <!--创建人-->
+		<result column="CREATE_USER_NAME" property="createUserName" jdbcType="VARCHAR" /> <!--创建人姓名-->
+		<result column="UDATE_DATE" property="udateDate" jdbcType="TIMESTAMP" /> <!--最后修改时间-->
+		<result column="UPDATE_USER" property="updateUser" jdbcType="DECIMAL" /> <!--最后修改人-->
+		<result column="ISVALUE" property="isvalue" jdbcType="VARCHAR" /> <!--是否有效 1 有效 0失效-->
+		<result column="KNOCKDOWN_DATE" property="knockdownDate" jdbcType="TIMESTAMP" /><!--成交时间-->
+		<result column="COM_XULIE" property="comXuLie" jdbcType="VARCHAR" /><!--成交时间COM_XULIE-->
+		<result column="COM_ZHE_JIA" property="comZheJia" jdbcType="DOUBLE" /> <!--折价多少价格-->
+		<result column="COM_SHIJIWAIGUANG" property="comShiJiWaiGuan" jdbcType="VARCHAR" /> <!--实际外观-->
+		<result column="COM_YUNDAN" property="comYunDan" jdbcType="VARCHAR" /> <!--运单-->
+	</resultMap>
+		<!--余额查询数据-->
+	<resultMap id="YuEResultMap" type="cn.zlin.demo.domain.UserDomain">
+		<id column="CREATE_USER" property="userId" jdbcType="DECIMAL" /> <!--创建人-->
+		<result column="CREATE_USER_NAME" property="userName" jdbcType="VARCHAR" /> <!--创建人姓名-->
+		<result column="MONEY_COUNT" property="moneyCount" jdbcType="DOUBLE" /> <!--购买价格-->
+	</resultMap>
+
+	<!--所销售的电脑数据-->
+	<resultMap id="ComResultMap" type="cn.zlin.demo.domain.TongJiData">
+		<id column="CREATE_USER" property="userId" jdbcType="DECIMAL" /> <!--创建人-->
+		<result column="CREATE_USER_NAME" property="userName" jdbcType="VARCHAR" /> <!--创建人姓名-->
+		<result column="COMPUTERNUM" property="computerNum" jdbcType="DECIMAL" /> <!--购买价格-->
+	</resultMap>
+    <!--利潤-->
+	<resultMap id="ComResultLiRun" type="cn.zlin.demo.domain.YearLiRun">
+		<id column="MOUTH" property="mouth" jdbcType="VARCHAR" /> <!--创建人-->
+		<result column="BUY_NUMBER" property="soleNumber" jdbcType="DECIMAL" /> <!--创建人姓名-->
+		<result column="SOLE_NUMBER" property="buyNumber" jdbcType="DECIMAL" /> <!--购买价格-->
+	</resultMap>
+
+	<!-- 新增 -->
+	<insert id="insert"  parameterType="cn.zlin.demo.domain.ComputerInfo">
+		INSERT INTO
+		computer_info
+		(
+		CON_XINGHAO,
+		COM_CPU,
+		COM_XIAN_KA,
+		COM_NEI_CUN,
+		COM_YING_PAN,
+		COM_ZHUANG_TAI,
+		COM_BAO_YOU,
+		COM_PIN_PAI,
+		COM_WAI_GUAN,
+		COM_BUG_PRICE,
+		COM_SOLE_PRICE,
+		CREATE_DATE,
+		CREATE_USER,
+		UDATE_DATE,
+		UPDATE_USER,
+		ISVALUE,
+		COM_XULIE,
+		COM_ZHE_JIA,
+		COM_YUNDAN
+		) VALUES (
+		#{conXinghao,jdbcType=VARCHAR},
+		#{comCpu,jdbcType=VARCHAR},
+		#{comXianKa,jdbcType=VARCHAR},
+		#{comNeiCun,jdbcType=VARCHAR},
+		#{comYingPan,jdbcType=VARCHAR},
+		'5',
+		#{comBaoYou,jdbcType=VARCHAR},
+		#{comPinPai,jdbcType=VARCHAR},
+		#{comWaiGuan,jdbcType=VARCHAR},
+		#{comBugPrice,jdbcType=DOUBLE},
+		#{comSolePrice,jdbcType=DOUBLE},
+		NOW(),
+		#{createUser,jdbcType=DECIMAL},
+		NOW(),
+		#{updateUser,jdbcType=DECIMAL},
+		'1',
+		#{comXuLie,jdbcType=VARCHAR},
+		#{comZheJia,jdbcType=DOUBLE},
+		#{comYunDan,jdbcType=VARCHAR}
+		)
+	</insert>
+
+
+
+	<!-- 列表（总数） -->
+	<select id="countList"  resultType="java.lang.Long">
+		SELECT COUNT(1) FROM computer_info T
+		LEFT JOIN
+		user_info 	T1 ON  T.CREATE_USER=	T1.USER_ID
+		<include refid="find_where" />
+	</select>
+
+	<!-- 列表（分页） -->
+	<select id="searchList"  resultMap="BaseResultMap">
+		SELECT
+		T.CON_ID,
+		T.CON_XINGHAO,
+		T.COM_CPU,
+		T.COM_XIAN_KA,
+		T.COM_NEI_CUN,
+		T.COM_YING_PAN,
+		T.COM_ZHUANG_TAI,
+		T.COM_BAO_YOU,
+		T.COM_PIN_PAI,
+		T.COM_WAI_GUAN,
+		T.COM_BUG_PRICE,
+		T.COM_SOLE_PRICE,
+		T.CREATE_DATE,
+		T.CREATE_USER,
+		T1.USER_NAME  AS CREATE_USER_NAME,
+		T.UDATE_DATE,
+		T.UPDATE_USER,
+		T.ISVALUE,
+		T.COM_XULIE,
+		T.COM_ZHE_JIA,
+		T.COM_SHIJIWAIGUANG,
+		T.COM_YUNDAN
+		FROM
+		computer_info T
+		LEFT JOIN
+		user_info 	T1 ON  T.CREATE_USER=	T1.USER_ID
+		<include refid="find_where" />
+		ORDER  BY   T. COM_ZHUANG_TAI  in (1,2,5,9,10) desc, T.CREATE_DATE desc
+	</select>
+
+
+	<!-- 列表（条件） -->
+	<sql id="find_where">
+		<where>
+			/*是否有效*/
+			T.ISVALUE =1
+			/*电脑状态*/
+			<if test="comZhuangTai!=null and comZhuangTai!='' ">
+				AND T.COM_ZHUANG_TAI = #{comZhuangTai, jdbcType=VARCHAR}
+			</if>
+			/*型號查询*/
+			<if test="conXinghao!=null and conXinghao!='' ">
+				AND T.CON_XINGHAO LIKE CONCAT(CONCAT('%',#{conXinghao,jdbcType=VARCHAR}),'%')
+			</if>
+			/*时间查询*/
+			<if test="startTime!=null  and startTime!=''  ">
+				AND T.CREATE_DATE <![CDATA[ > ]]> DATE_FORMAT(#{startTime},'%Y-%m-%d ')
+			</if>
+			<if test="endTime!=null and endTime!='' ">
+				AND T.CREATE_DATE <![CDATA[ <= ]]> DATE_FORMAT(#{endTime},'%Y-%m-%d ')
+			</if>
+			/*用户姓名*/
+			<if test="createUserName !=null and createUserName != ''">
+				AND T1.USER_NAME LIKE CONCAT(CONCAT('%',#{createUserName,jdbcType=VARCHAR}),'%')
+			</if>
+			<if test="createUser !=null and createUser != ''">
+				AND T.CREATE_USER =#{createUser,jdbcType=DECIMAL}
+			</if>
+			<if test="comBugPrice !=null and comBugPrice != ''">
+				AND T.COM_BUG_PRICE =#{comBugPrice,jdbcType=DOUBLE}
+			</if>
+		</where>
+	</sql>
+
+	<!-- 修改 -->
+	<update id="update" parameterType="cn.zlin.demo.domain.ComputerInfo">
+		UPDATE
+		computer_info
+		<set>
+			<if test="comShiJiWaiGuan != null " >
+				COM_SHIJIWAIGUANG=#{comShiJiWaiGuan,jdbcType=VARCHAR},
+			</if>
+			<if test="comYunDan != null " >
+				COM_YUNDAN=#{comYunDan,jdbcType=VARCHAR},
+			</if>
+			<if test="comZheJia != null " >
+				COM_ZHE_JIA=#{comZheJia,jdbcType=DOUBLE},
+			</if>
+			<if test="comXuLie != null " >
+				COM_XULIE=#{comXuLie,jdbcType=VARCHAR},
+			</if>
+			<if test="conXinghao != null " >
+				CON_XINGHAO=#{conXinghao,jdbcType=VARCHAR},
+			</if>
+			<if test="comCpu != null " >
+				COM_CPU=#{comCpu,jdbcType=VARCHAR},
+			</if>
+			<if test="comXianKa != null " >
+				COM_XIAN_KA=#{comXianKa,jdbcType=VARCHAR},
+			</if>
+			<if test="comNeiCun != null " >
+				COM_NEI_CUN=#{comNeiCun,jdbcType=VARCHAR},
+			</if>
+			<if test="comYingPan != null " >
+				COM_YING_PAN=#{comYingPan,jdbcType=VARCHAR},
+			</if>
+			<if test="comZhuangTai != null " >
+				COM_ZHUANG_TAI=#{comZhuangTai,jdbcType=VARCHAR},
+			</if>
+			<if test="comBaoYou != null " >
+				COM_BAO_YOU=#{comBaoYou,jdbcType=VARCHAR},
+			</if>
+			<if test="comPinPai != null " >
+				COM_PIN_PAI=#{comPinPai,jdbcType=VARCHAR},
+			</if>
+			<if test="comWaiGuan != null " >
+				COM_WAI_GUAN=#{comWaiGuan,jdbcType=VARCHAR},
+			</if>
+			<if test="comBugPrice != null " >
+				COM_BUG_PRICE=#{comBugPrice,jdbcType=DOUBLE},
+			</if>
+			<if test="comSolePrice != null " >
+				COM_SOLE_PRICE=#{comSolePrice,jdbcType=DOUBLE},
+			</if>
+			<if test="createDate != null " >
+				CREATE_DATE=#{createDate,jdbcType=TIMESTAMP},
+			</if>
+			<if test="createUser != null " >
+				CREATE_USER=#{createUser,jdbcType=DECIMAL},
+			</if>
+			UDATE_DATE=now(),
+			<if test="updateUser != null " >
+				UPDATE_USER=#{updateUser,jdbcType=DECIMAL},
+			</if>
+			<if test="isvalue != null " >
+				ISVALUE=#{isvalue,jdbcType=VARCHAR},
+			</if>
+		</set>
+		WHERE
+		CON_ID= #{conId,jdbcType=DECIMAL}
+	</update>
+
+
+	<!-- 修改成交时间 -->
+	<update id="updateKnockdownDate" parameterType="cn.zlin.demo.domain.ComputerInfo">
+		UPDATE
+		computer_info
+		<set>
+
+			<if test="comZhuangTai != null " >
+				COM_ZHUANG_TAI=#{comZhuangTai,jdbcType=VARCHAR},
+			</if>
+			KNOCKDOWN_DATE=now(),
+			UDATE_DATE=now(),
+			<if test="updateUser != null " >
+				UPDATE_USER=#{updateUser,jdbcType=DECIMAL},
+			</if>
+			<if test="isvalue != null " >
+				ISVALUE=#{isvalue,jdbcType=VARCHAR},
+			</if>
+			<if test="comShiJiWaiGuan != null " >
+				COM_SHIJIWAIGUANG=#{comShiJiWaiGuan,jdbcType=VARCHAR},
+			</if>
+			<if test="comZheJia != null " >
+				COM_ZHE_JIA=#{comZheJia,jdbcType=DOUBLE},
+			</if>
+			<if test="comBugPrice != null " >
+				COM_BUG_PRICE=#{comBugPrice,jdbcType=DOUBLE},
+			</if>
+		</set>
+		WHERE
+		CON_ID= #{conId,jdbcType=DECIMAL}
+	</update>
+
+	<!--根据用户的id 进行查询用户的余额-->
+	<select id="getMoneyByUserid"  resultMap="YuEResultMap">
+		select	CREATE_USER,SUM(MONEY_COUNT) as MONEY_COUNT ,CREATE_USER_NAME  from
+	(select T.CREATE_USER,sum(T.COM_BUG_PRICE) AS MONEY_COUNT,T1.USER_NAME AS  CREATE_USER_NAME from  computer_info T
+		LEFT JOIN
+		user_info 	T1 ON  T.CREATE_USER=	T1.USER_ID
+		where  T.ISVALUE=1
+		AND  T.COM_ZHUANG_TAI  IN (1,2)
+		AND   T.CREATE_USER =#{createUser,jdbcType=DECIMAL}
+		group by T.CREATE_USER,T1.USER_NAME
+		union all
+	SELECT CREATE_USER,sum(COM_ZHE_JIA) as  MONEY_COUNT,T3.USER_NAME AS CREATE_USER_NAME
+		FROM computer_info T2
+		LEFT JOIN
+		user_info 	T3 ON  T2.CREATE_USER=	T3.USER_ID
+		WHERE  T2.ISVALUE=1
+		AND   T2.CREATE_USER =#{createUser,jdbcType=DECIMAL}
+		AND   T2.COM_ZHUANG_TAI ='9'
+		group  by  T2.CREATE_USER,T3.USER_NAME
+		)a  group by CREATE_USER,CREATE_USER_NAME
+	</select>
+
+
+	<!--boss查看用户余额信息-->
+	<select id="getMoney"  resultMap="YuEResultMap">
+		select	CREATE_USER,SUM(MONEY_COUNT) as MONEY_COUNT ,CREATE_USER_NAME  from
+		(select T.CREATE_USER,sum(T.COM_BUG_PRICE) AS MONEY_COUNT,T1.USER_NAME AS  CREATE_USER_NAME from  computer_info T
+		LEFT JOIN
+		user_info 	T1 ON  T.CREATE_USER=	T1.USER_ID
+		where  T.ISVALUE=1
+		AND  T.COM_ZHUANG_TAI  IN (1,2)
+		<if test="time == 1 " >
+			AND  TO_DAYS(T.CREATE_DATE) = TO_DAYS(NOW())
+		</if>
+		<if test="time == 2 " >
+			AND  date_format(T.CREATE_DATE,'%Y-%m') = date_format(now(),'%Y-%m')
+		</if>
+		<if test="time == 3 " >
+			AND  date_format(CREATE_DATE,'%Y-%m') = date_format(DATE_SUB(curdate(), INTERVAL 1 MONTH), '%Y-%m')
+		</if>
+		<if test="time == 4 " >
+			AND  date_format(T.CREATE_DATE,'%Y-%m') >= date_format(DATE_SUB(curdate(), INTERVAL 3 MONTH), '%Y-%m')
+		</if>
+		group by T.CREATE_USER,T1.USER_NAME
+		union all
+		SELECT CREATE_USER,sum(COM_ZHE_JIA) as  MONEY_COUNT,T3.USER_NAME AS CREATE_USER_NAME
+		FROM computer_info T2
+		LEFT JOIN
+		user_info 	T3 ON  T2.CREATE_USER=	T3.USER_ID
+		WHERE  T2.ISVALUE=1
+		<if test="time == 1 " >
+			AND  TO_DAYS(T2.CREATE_DATE) = TO_DAYS(NOW())
+		</if>
+		<if test="time == 2 " >
+			AND  date_format(T2.CREATE_DATE,'%Y-%m') = date_format(now(),'%Y-%m')
+		</if>
+		<if test="time == 3 " >
+			AND  date_format(T2.CREATE_DATE,'%Y-%m') = date_format(DATE_SUB(curdate(), INTERVAL 1 MONTH), '%Y-%m')
+		</if>
+		<if test="time == 4 " >
+			AND  date_format(T2.CREATE_DATE,'%Y-%m') >= date_format(DATE_SUB(curdate(), INTERVAL 3 MONTH), '%Y-%m')
+		</if>
+		AND   T2.COM_ZHUANG_TAI ='9'
+		group  by  T2.CREATE_USER,T3.USER_NAME
+		)a  group by CREATE_USER,CREATE_USER_NAME
+
+	</select>
+
+
+
+	<!--年盈利统计-->
+	<select id="getYingLi"  resultMap="ComResultLiRun">
+			select
+				month (CREATE_DATE) as MOUTH,
+				SUM(COM_SOLE_PRICE) as BUY_NUMBER,
+				SUM(COM_BUG_PRICE) as SOLE_NUMBER
+			from
+				computer_info
+			 where
+			 	COM_ZHUANG_TAI='0'
+		     AND
+		    	ISVALUE=1
+		     AND
+			    year ( CREATE_DATE) =#{time,jdbcType=VARCHAR}
+  			 group by
+  			    month ( CREATE_DATE )
+	</select>
+
+	<!--获得boss统计数据通过用户id-->
+	<select id="getTongJiDate"  resultMap="ComResultMap">
+		select
+		T.CREATE_USER,count(1) AS COMPUTERNUM,T1.USER_NAME AS CREATE_USER_NAME
+		from  computer_info T
+		LEFT JOIN
+		user_info 	T1 ON  T.CREATE_USER=	T1.USER_ID
+		where
+		ISVALUE=1
+		AND
+		COM_ZHUANG_TAI  IN (0,4,7)
+		<if test="time == 1 " >
+			AND  TO_DAYS(T.CREATE_DATE) = TO_DAYS(NOW())
+		</if>
+		<if test="time == 2 " >
+			AND  date_format(T.CREATE_DATE,'%Y-%m') = date_format(now(),'%Y-%m')
+		</if>
+		<if test="time == 3 " >
+			AND  date_format(T.CREATE_DATE,'%Y-%m') = date_format(DATE_SUB(curdate(), INTERVAL 1 MONTH), '%Y-%m')
+		</if>
+		<if test="time == 4 " >
+			AND  date_format(T.CREATE_DATE,'%Y-%m') >= date_format(DATE_SUB(curdate(), INTERVAL 3 MONTH), '%Y-%m')
+		</if>
+		group by T.CREATE_USER,T1.USER_NAME
+	</select>
+
+	<!-- 详情 -->
+	<select id="searchById" parameterType="long"  resultMap="BaseResultMap">
+		SELECT
+			T.CON_ID,
+			T.CON_XINGHAO,
+			T.COM_CPU,
+			T.COM_XIAN_KA,
+			T.COM_NEI_CUN,
+			T.COM_YING_PAN,
+			T.COM_ZHUANG_TAI,
+			T.COM_BAO_YOU,
+			T.COM_PIN_PAI,
+			T.COM_WAI_GUAN,
+			T.COM_BUG_PRICE,
+			T.COM_SOLE_PRICE,
+			T.CREATE_DATE,
+			T.CREATE_USER,
+			T.CREATE_USER_NAME,
+			T.UDATE_DATE,
+			T.UPDATE_USER,
+			T.ISVALUE,
+			T.COM_XULIE,
+			T.KNOCKDOWN_DATE,
+			T.COM_ZHE_JIA,
+			T.COM_SHIJIWAIGUANG,
+			T.COM_YUNDAN
+		FROM
+			computer_info T
+		WHERE
+			T.CON_ID= #{conId,jdbcType=DECIMAL}
+	</select>
+		<!--查询今天发费多少钱-->
+	<select id="getSpendMoney"   resultType="long">
+		SELECT
+		sum(COM_BUG_PRICE)
+		FROM
+		computer_info
+		 WHERE
+		ISVALUE=1
+		<if test="time == 1 " >
+			AND  TO_DAYS(CREATE_DATE) = TO_DAYS(NOW())
+		</if>
+		<if test="time == 2 " >
+			AND  date_format(CREATE_DATE,'%Y-%m') = date_format(now(),'%Y-%m')
+		</if>
+		<if test="time == 3 " >
+			AND  date_format(CREATE_DATE,'%Y-%m') = date_format(DATE_SUB(curdate(), INTERVAL 1 MONTH), '%Y-%m')
+		</if>
+		<if test="time == 4 " >
+			AND  date_format(CREATE_DATE,'%Y-%m') >= date_format(DATE_SUB(curdate(), INTERVAL 3 MONTH), '%Y-%m')
+		</if>
+		  AND
+		COM_ZHUANG_TAI in (0,4,6,7,9)
+	<!--	<if test="userid != null||userid!='' " >
+			AND  CREATE_USER= #{userid,jdbcType=DECIMAL}
+		</if>-->
+	</select>
+
+	<!--（0 已售 1 退单 2 退货   4 在架 5 待付款 6 已付款）-->
+	<!--查询今天收入多少钱-->
+	<select id="getIncome"   resultType="long">
+		SELECT
+		sum(COM_SOLE_PRICE)
+		FROM
+		computer_info
+		WHERE
+		ISVALUE=1
+		<if test="time == 1 " >
+			AND  TO_DAYS(CREATE_DATE) = TO_DAYS(NOW())
+		</if>
+		<if test="time == 2 " >
+			AND  date_format(CREATE_DATE,'%Y-%m') = date_format(now(),'%Y-%m')
+		</if>
+		<if test="time == 3 " >
+			AND  date_format(CREATE_DATE,'%Y-%m') = date_format(DATE_SUB(curdate(), INTERVAL 1 MONTH), '%Y-%m')
+		</if>
+		<if test="time == 4 " >
+			AND  date_format(CREATE_DATE,'%Y-%m') >= date_format(DATE_SUB(curdate(), INTERVAL 3 MONTH), '%Y-%m')
+		</if>
+		AND
+		COM_ZHUANG_TAI='0'
+	</select>
+
+
+	<!--今天收电脑的量-->
+	<select id="getNumCom"   resultType="long">
+		SELECT
+		 count(1)
+		FROM
+		computer_info
+		 WHERE
+		ISVALUE=1
+		<if test="time == 1 " >
+			AND  TO_DAYS(CREATE_DATE) = TO_DAYS(NOW())
+		</if>
+		<if test="time == 2 " >
+			AND  date_format(CREATE_DATE,'%Y-%m') = date_format(now(),'%Y-%m')
+		</if>
+		<if test="time == 3 " >
+			AND  date_format(CREATE_DATE,'%Y-%m') = date_format(DATE_SUB(curdate(), INTERVAL 1 MONTH), '%Y-%m')
+		</if>
+		<if test="time == 4 " >
+			AND  date_format(CREATE_DATE,'%Y-%m') >= date_format(DATE_SUB(curdate(), INTERVAL 3 MONTH), '%Y-%m')
+		</if>
+		AND
+		COM_ZHUANG_TAI  in  (0,4,7)
+	<!--	<if test="createUser != null ||createUser!='' " >
+		AND  CREATE_USER= #{createUser,jdbcType=DECIMAL}
+	</if>-->
+	</select>
+
+		<!--库存数量-->
+	<select id="getScrapCom"   resultType="long">
+		SELECT
+		count(1)
+		FROM
+		computer_info
+		WHERE
+		ISVALUE=1
+		AND
+		COM_ZHUANG_TAI ='4'
+	</select>
+
+
+	<!--今天员工收电脑的量-->
+	<select id="getPrivateNumCom"   resultType="long">
+		SELECT
+		count(1)
+		FROM
+		computer_info
+		WHERE
+		ISVALUE=1
+		<if test="time == 1 " >
+			AND  TO_DAYS(CREATE_DATE) = TO_DAYS(NOW())
+		</if>
+		<if test="time == 2 " >
+			AND  date_format(CREATE_DATE,'%Y-%m') = date_format(now(),'%Y-%m')
+		</if>
+		<if test="time == 3 " >
+			AND  date_format(CREATE_DATE,'%Y-%m') = date_format(DATE_SUB(curdate(), INTERVAL 1 MONTH), '%Y-%m')
+		</if>
+		<if test="time == 4 " >
+			AND  date_format(CREATE_DATE,'%Y-%m') >= date_format(DATE_SUB(curdate(), INTERVAL 3 MONTH), '%Y-%m')
+		</if>
+		AND
+		COM_ZHUANG_TAI  in (0,4,7)
+		AND  CREATE_USER= #{userid,jdbcType=DECIMAL}
+	</select>
+
+	<!--查询员工今天发费多少钱-->
+	<select id="getPrivateSpendMoney"   resultType="long">
+		SELECT
+		sum(COM_BUG_PRICE)
+		FROM
+		computer_info
+		WHERE
+		ISVALUE=1
+		<if test="time == 1 " >
+			AND  TO_DAYS(CREATE_DATE) = TO_DAYS(NOW())
+		</if>
+		<if test="time == 2 " >
+			AND  date_format(CREATE_DATE,'%Y-%m') = date_format(now(),'%Y-%m')
+		</if>
+		<if test="time == 3 " >
+			AND  date_format(CREATE_DATE,'%Y-%m') = date_format(DATE_SUB(curdate(), INTERVAL 1 MONTH), '%Y-%m')
+		</if>
+		<if test="time == 4 " >
+			AND  date_format(CREATE_DATE,'%Y-%m') >= date_format(DATE_SUB(curdate(), INTERVAL 3 MONTH), '%Y-%m')
+		</if>
+			AND  CREATE_USER= #{userid,jdbcType=DECIMAL}
+		AND
+		COM_ZHUANG_TAI in (0,4,6,7,9)
+	</select>
+
+
+	<!--员工收入统计-->
+	<select id="getPersonComData"  resultMap="ComResultLiRun">
+			select
+				month (CREATE_DATE) as MOUTH,
+				count(1) as BUY_NUMBER,
+				count(1) as SOLE_NUMBER
+			from
+				computer_info
+			 where
+			 			COM_ZHUANG_TAI in (0,4,7)
+			 AND  ISVALUE=1
+		     AND year ( CREATE_DATE) =#{time,jdbcType=VARCHAR}
+			  AND  CREATE_USER= #{userid,jdbcType=DECIMAL}
+  			 group by
+  			    month ( CREATE_DATE )
+	</select>
+
+
+	<!-- 获得自己的手上折价的钱-->
+	<select id="getPersionZheJiaMoney"   resultMap="YuEResultMap">
+		SELECT
+		sum(COM_ZHE_JIA) as  MONEY_COUNT,
+		CREATE_USER,
+		T1.USER_NAME AS CREATE_USER_NAME
+		FROM
+		computer_info
+		LEFT JOIN
+		user_info 	T1 ON  T.CREATE_USER=	T1.USER_ID
+		WHERE
+		ISVALUE=1
+		AND
+		COM_ZHUANG_TAI ='9'
+		<if test="userid != null||userid!='' " >
+			AND  CREATE_USER= #{userid,jdbcType=DECIMAL}
+		</if>
+	</select>
+
+	<!-- 获得员工的手上折价的钱-->
+	<select id="getZheJiaMoney"   resultMap="YuEResultMap">
+		SELECT
+		sum(COM_ZHE_JIA) as  MONEY_COUNT,
+		CREATE_USER,
+		T1.USER_NAME AS CREATE_USER_NAME
+		FROM
+		computer_info
+		LEFT JOIN
+		user_info 	T1 ON  T.CREATE_USER=	T1.USER_ID
+		WHERE
+		ISVALUE=1
+		AND
+		COM_ZHUANG_TAI ='9'
+		group  by  COM_ZHE_JIA ,CREATE_USER,T1.USER_NAME
+	</select>
+
+
+</mapper>

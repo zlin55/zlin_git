@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.springframework.org/schema/data/jaxb">
+<head>
+    <meta charset="UTF-8">
+    <title>新增收购电脑</title>
+    <link rel="stylesheet" th:href="|${basePath}/static/layui/css/layui.css|" media="all" />
+    <script th:src="|${basePath}/static/js/jquery.min.js?v=2.1.4|"></script>
+    <script type="text/javascript" th:src="|${basePath}/static/layui/layui.js|"></script>
+</head>
+<body>
+<form class="layui-form" id="computerForm" style="padding-top: 20px">
+
+    <div class="layui-form-item" style="padding-top: 17px">
+        <label class="layui-form-label">电脑序列：</label>
+        <div class="layui-input-block" style="width: 75%">
+            <input type="text" id="comXuLie" name="comXuLie"    maxlength="20"  lay-verify="required" autocomplete="off" placeholder="请输入电脑序列" class="layui-input">
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+        <div class="layui-inline"     style="width:45%">
+            <label class="layui-form-label">电脑型号：</label>
+            <div class="layui-input-inline" style="width:60%">
+                <input type="text" id="conXinghao" name="conXinghao"    maxlength="20" autocomplete="off"  lay-verify="required"  placeholder="请输入电脑型号" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-inline"  style="width:45%">
+                <label class="layui-form-label" >电脑cpu：</label>
+                <div class="layui-input-inline" style="width: 60%">
+                    <input type="text" id="comCpu" name="comCpu"   maxlength="20"   lay-verify="required" autocomplete="off"                                      placeholder="电脑cpu" class="layui-input">
+                </div>
+        </div>
+    </div>
+
+
+   <div class="layui-form-item">
+        <div class="layui-inline"     style="width:45%">
+            <label class="layui-form-label">电脑显卡：</label>
+            <div class="layui-input-inline" style="width:60%">
+                <input type="text" id="comXianKa" name="comXianKa"  maxlength="20"  lay-verify="required" autocomplete="off"                                placeholder="电脑显卡" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-inline"  style="width:45%">
+            <label class="layui-form-label">电脑硬盘：</label>
+            <div class="layui-input-inline" style="width: 60%">
+                    <input type="text" id="comYingPan"  maxlength="20"  name="comYingPan"  lay-verify="required" autocomplete="off"                              placeholder="电脑硬盘" class="layui-input">
+
+            </div>
+        </div>
+    </div>
+
+
+  <div class="layui-form-item">
+        <div class="layui-inline"     style="width:45%">
+            <label class="layui-form-label">电脑内存：</label>
+            <div class="layui-input-inline" style="width:60%">
+                <input type="text" id="comNeiCun" name="comNeiCun"  maxlength="20"  lay-verify="required" autocomplete="off"                                placeholder="电脑内存" class="layui-input">
+            </div>
+        </div>
+        <div class="layui-inline"  style="width:45%">
+            <label class="layui-form-label">购买价格：</label>
+            <div class="layui-input-inline" style="width: 60%">
+                    <input type="text" id="comBugPrice" oninput = "value=value.replace(/[^\d]/g,'')" maxlength="5"   name="comBugPrice"  lay-verify="required" autocomplete="off"                            placeholder="电脑购买价格" class="layui-input">
+            </div>
+        </div>
+    </div>
+
+    <div class="layui-form-item">
+      <div class="layui-inline"     style="width:45%">
+          <label class="layui-form-label">是否包邮 ：</label>
+          <div class="layui-input-inline" style="width:60%">
+              <select name="comBaoYou" id="comBaoYou">
+                  <option th:each="baoyou : ${baoyou}" th:value="${baoyou?.dicCode}" th:text="${baoyou?.dicName}"></option>
+              </select>
+          </div>
+      </div>
+      <div class="layui-inline"  style="width:45%">
+          <label class="layui-form-label">电脑品牌 ：</label>
+          <div class="layui-input-inline" style="width: 60%">
+                  <select name="comPinPai" id="comPinPai">
+                      <option th:each="diannaopinpai : ${diannaopinpai}" th:value="${diannaopinpai?.dicCode}"th:text="${diannaopinpai?.dicName}"></option>
+                  </select>
+          </div>
+      </div>
+  </div>
+
+    <div class="layui-form-item" style="padding-top: 17px">
+        <label class="layui-form-label">货运单号：</label>
+        <div class="layui-input-block" style="width: 75%">
+            <input type="text" id="comYunDan" name="comYunDan"    maxlength="50"  lay-verify="required" autocomplete="off"
+                   placeholder="格式快递单号+快递名字 如 ：1234顺丰" class="layui-input">
+        </div>
+    </div>
+
+
+    <div class="layui-form-item" style="padding-top: 17px">
+        <label class="layui-form-label">电脑备注：</label>
+        <div class="layui-input-block" style="width: 75%">
+            <input type="text" id="comWaiGuan" name="comWaiGuan"    maxlength="40"  lay-verify="required" autocomplete="off" placeholder="电脑备注" class="layui-input">
+        </div>
+    </div>
+
+
+    <div style="position: fixed;bottom: 20px;text-align: center;width: 100%;">
+        <input type="button" class="layui-btn" onclick="add();" value="保存"></input>
+    </div>
+</form>
+<script>
+    var index = parent.layer.getFrameIndex(window.name); //获取窗口索引
+    layui.use(['jquery','layer','form'],function(){
+        var $=layui.jquery
+            ,layer=layui.layer
+            ,form=layui.form
+    });
+
+    function add(){
+        var conXinghao = $("#conXinghao").val();
+        var comCpu = $("#comCpu").val();
+        var comXianKa = $("#comXianKa").val();
+        var comYingPan = $("#comYingPan").val();
+        var comNeiCun = $("#comNeiCun").val();
+        var comBugPrice = $("#comBugPrice").val();
+        var comWaiGuan = $("#comWaiGuan").val();
+        var comXuLie=$("#comXuLie").val();
+        var comYunDan =$("#comYunDan").val();
+        if(comYunDan == ''){
+            layer.msg("请输入电脑货运单号");
+            return;
+        }
+        if(comXuLie == ''){
+            layer.msg("请输入电脑序列");
+            return;
+        }
+        if(conXinghao == ''){
+            layer.msg("请输入电脑型号");
+            return;
+        }
+        if(comCpu == ''){
+            layer.msg("请输入电脑cpu");
+            return;
+        }
+        if(comXianKa == ''){
+            layer.msg("请输入显卡");
+            return;
+        }
+        if(comYingPan == ''){
+            layer.msg("请输入电脑硬盘");
+            return;
+        }
+        if(comNeiCun == ''){
+            layer.msg("请输入电脑内存");
+            return;
+        }
+        if(comBugPrice == ''){
+            layer.msg("请输入购买价格");
+            return;
+        }
+        if(comWaiGuan == ''){
+            layer.msg("请输入电脑备注");
+            return;
+        }
+        $.ajax({
+            type: 'POST',
+            url: '[[${basePath}]]/computerInfo/save',
+            data: $('#computerForm').serialize(),
+            dataType: 'json',
+            success: function(data) {
+                if(data.result) {
+                    layer.msg("添加成功！");
+                    setTimeout(function(){  parent.window.location.reload();
+                        parent.layer.close(index); }, 1000);
+
+                }else{
+                    layer.msg("新增失败");
+                }
+            },
+            error: function(data) {
+                layer.msg('连接超时！');
+            },
+        });
+    }
+
+
+</script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>菜单管理</title>
+    <link rel="stylesheet" th:href="|${basePath}/static/layui/css/layui.css|" media="all" />
+    <script th:src="|${basePath}/static/js/jquery.min.js?v=2.1.4|"></script>
+    <script type="text/javascript" th:src="|${basePath}/static/layui/layui.js|"></script>
+</head>
+<body>
+<div style="padding-top: 12px;padding-left: 13px;padding-bottom: 10px;">
+    <label>权限名称：</label>
+    <div class="layui-inline">
+        <input class="layui-input" name="roleName" id="roleName" autocomplete="off">
+    </div>
+    <button class="layui-btn" id="do_search">查询</button>
+    <button class="layui-btn layui-btn-primary" id="do_clear">重置</button>
+    <button class="layui-btn layui-btn-normal layui-btn-sm" id="do_add" style="margin-top: 16px;margin-right: 28px;float: right">
+        <i class="layui-icon">&#xe654;</i>新增
+    </button>
+</div>
+<table id="roleList" lay-filter="roleList"></table>
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+</body>
+<script>
+    layui.use('table', function() {
+        var table = layui.table;
+        //用户列表
+        table.render({
+            elem: '#roleList',
+            url: '[[${basePath}]]/admin/roleList',
+            page: true,
+            height: 'full-85',
+            limits: [10, 15, 20, 25],
+            limit: 10,
+            id: "roleListTable",
+            cols: [ [
+                {type: 'checkbox', fixed: "left", width: 50},
+                {field: 'roleName', title: '权限名称', minWidth: 100, align: 'center',edit: 'text'},
+                {fixed: 'right', title:'操作', toolbar: '#barDemo', align: 'center',width:110}
+            ] ]
+        });
+        //监听单元格编辑
+        table.on('edit(roleList)', function(obj){
+            var value = obj.value //得到修改后的值
+            var data = obj.data //得到所在行所有键值
+            var field = obj.field; //得到字段
+            if(value == '' || value.length > 20){
+                table.reload('roleListTable');
+                layer.msg("菜单名称必须为1-20的字符");
+                return;
+            }
+            var roleName = value;
+            $.ajax({
+                type: 'POST',
+                url: '[[${basePath}]]/admin/updateRole',
+                data: {
+                    roleId : data.roleId,
+                    roleName : roleName
+                },
+                dataType: 'json',
+                success: function(data) {
+                    layer.msg("修改成功");
+                },
+                error: function(data) {
+                    layer.msg('连接超时！');
+                },
+            });
+        });
+
+        //监听工具条
+        table.on('tool(roleList)', function(obj){
+            var data = obj.data;
+            layer.confirm('确定要删除该权限么？', function(index){
+                $.ajax({
+                    type: 'POST',
+                    url: '[[${basePath}]]/admin/deleteRole',
+                    data: {
+                        roleId : data.roleId,
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        if(data.success){
+                            obj.del();
+                            layer.close(index);
+                            layer.msg("修改成功");
+                        }else{
+                            layer.msg(data.message);
+                        }
+
+                    },
+                    error: function(data) {
+                        layer.msg('连接超时！');
+                    },
+                });
+
+            });
+        });
+
+        //搜索
+        $('#do_search').on('click', function () {
+            // 搜索条件
+            var roleName = $('#roleName').val();
+            reloadList(roleName);
+        });
+        //重置
+        $('#do_clear').on('click', function () {
+            // 搜索条件
+            $('#roleName').val("");
+            reloadList("");
+        });
+
+        function reloadList(roleName){
+            tableIns = table.reload('roleListTable', {
+                method: 'post'
+                , where: {
+                    'roleName': roleName,
+                }
+                , page: {
+                    curr: 1
+                }
+            });
+        }
+
+        $("#do_add").click(function(){
+            layer.prompt({title: '请输入权限名称', formType: 3}, function(text, index){
+                $.ajax({
+                    type: 'POST',
+                    url: '[[${basePath}]]/admin/addRole',
+                    data: {
+                        roleName : text
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        if(data.success) {
+                            layer.close(index);
+                            reloadList("");
+                        }else{
+                            layer.msg("新增失败");
+                        }
+                    },
+                    error: function(data) {
+                        layer.msg('连接超时！');
+                    },
+                });
+
+            })
+        })
+
+    })
+
+
+
+
+
+
+</script>
+</html>

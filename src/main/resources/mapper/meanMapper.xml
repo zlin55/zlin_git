@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.zlin.demo.dao.MeanMapper">
+	<resultMap id="ResultMap" type="cn.zlin.demo.domain.Mean">
+		<id column="MEAN_ID" property="meanId" jdbcType="DECIMAL" />
+		<result column="MEAN_NAME" property="meanName" jdbcType="VARCHAR" />
+		<result column="MEAN_URL" property="meanUrl" jdbcType="VARCHAR" />
+		<result column="ROLE_ID" property="roleId" jdbcType="DECIMAL" />
+		<result column="IS_MEAN" property="isMean" jdbcType="VARCHAR" />
+	</resultMap>
+
+    <!-- 查出所有菜单 -->
+    <select id="selectMeanList"  resultMap="ResultMap">
+		SELECT * FROM mean_info T
+		<include refid="find_where" />
+	</select>
+
+	<select id="countList"  resultType="long">
+		SELECT COUNT(1) FROM mean_info T
+		<include refid="find_where" />
+	</select>
+
+	<sql id="find_where">
+		WHERE T.IS_VALID = '1'
+		<if test="meanName !=null and meanName != ''">
+			AND T.MEAN_NAME LIKE CONCAT(CONCAT('%',#{meanName,jdbcType=VARCHAR}),'%')
+		</if>
+		<if test="isMean !=null and isMean != ''">
+			AND T.IS_MEAN = #{isMean,jdbcType=VARCHAR}
+		</if>
+	</sql>
+
+	<!-- 查出该用户所拥有权限的菜单 -->
+	<select id="selectUserMean"  resultMap="ResultMap">
+		SELECT * FROM mean_info t LEFT JOIN role_info v ON t.ROLE_ID = v.ROLE_ID AND v.IS_VALID = '1'
+		WHERE v.USER_ID = #{userId,jdbcType=DECIMAL}
+		AND t.IS_VALID = '1'
+		AND t.IS_MEAN = '1'
+		OR (t.IS_MEAN = '1' AND t.ROLE_ID IS NULL)
+	</select>
+
+	<!-- 更新菜单 -->
+	<update id="updateMean" parameterType="cn.zlin.demo.domain.Mean">
+		UPDATE mean_info
+		<set>
+			<if test="meanName != null and meanName != ''">
+				MEAN_NAME = #{meanName,jdbcType=VARCHAR},
+			</if>
+			<if test="meanUrl != null and meanUrl != ''">
+				MEAN_URL = #{meanUrl,jdbcType=VARCHAR},
+			</if>
+			<if test="isMean != null and isMean != ''">
+				IS_MEAN = #{isMean,jdbcType=VARCHAR},
+			</if>
+			UPDATOR = #{userId,jdbcType=DECIMAL},
+			UPDATE_TIME = now()
+		</set>
+		WHERE
+			MEAN_ID = #{meanId,jdbcType=DECIMAL}
+	</update>
+
+	<!-- 删除菜单 -->
+	<update id="deleteMean" parameterType="cn.zlin.demo.domain.Mean">
+		UPDATE mean_info
+		<set>
+			IS_VALID = '0',
+			UPDATOR = #{userId,jdbcType=DECIMAL},
+			UPDATE_TIME = now()
+		</set>
+		WHERE
+			MEAN_ID = #{meanId,jdbcType=DECIMAL}
+	</update>
+
+	<insert id="addMean" parameterType="cn.zlin.demo.domain.Mean">
+		INSERT INTO mean_info
+		(
+			MEAN_NAME,
+			MEAN_URL,
+			ROLE_ID,
+			CREATE_TIME,
+			UPDATE_TIME,
+			UPDATOR,
+			IS_VALID,
+			IS_MEAN
+		)
+		VALUES(
+			#{meanName,jdbcType=VARCHAR},
+			#{meanUrl,jdbcType=VARCHAR},
+			#{roleId,jdbcType=DECIMAL},
+			now(),
+			now(),
+			#{userId,jdbcType=DECIMAL},
+			'1',
+			#{isMean,jdbcType=VARCHAR}
+		)
+
+	</insert>
+
+	<!-- 判断该权限是否已经分配给菜单 -->
+	<select id="isUsing" resultMap="ResultMap">
+		SELECT * FROM mean_info WHERE IS_VALID = '1' AND ROLE_ID = #{roleId,jdbcType=DECIMAL}
+	</select>
+
+	<!-- 判断该权限是否已经分配给菜单 -->
+	<select id="isExist" resultType="Long">
+		SELECT COUNT(1) FROM mean_info WHERE IS_VALID = '1' AND MEAN_URL = #{meanUrl,jdbcType=VARCHAR}
+	</select>
+
+	<update id="alterRole" parameterType="cn.zlin.demo.domain.Mean">
+		UPDATE mean_info
+		<set>
+			ROLE_ID = #{roleId,jdbcType=DECIMAL},
+			UPDATOR = #{userId,jdbcType=DECIMAL},
+			UPDATE_TIME = now()
+		</set>
+		WHERE
+			MEAN_ID = #{meanId,jdbcType=DECIMAL}
+	</update>
+</mapper>

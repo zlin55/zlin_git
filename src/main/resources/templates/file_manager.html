@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>文件管理器</title>
+    <link href="/static/css/bootstrap.min.css?v=3.3.6" rel="stylesheet">
+    <link href="/static/css/font-awesome.css?v=4.4.0" rel="stylesheet">
+    <link href="/static/css/animate.css" rel="stylesheet">
+    <link href="/static/css/style.css?v=4.1.0" rel="stylesheet">
+    <link rel="stylesheet" th:href="|${basePath}/static/layui/css/layui.css|" media="all" />
+    <link href="/static/js/plugins/fancybox/jquery.fancybox.css" rel="stylesheet">
+    <link href="/static/css/video-js.min.css" rel="stylesheet">
+    <style>
+        .file-name{overflow: hidden;text-overflow: ellipsis;white-space: nowrap;}
+        .file-box{ display: inline-block;position: relative;}
+        .file-box .delete {position: absolute;top: -15px;right: 5px;width: 35px;height: 35px;display: none}
+    </style>
+</head>
+
+<body class="gray-bg">
+    <div class="wrapper wrapper-content">
+        <div class="row">
+            <div class="col-sm-3">
+                <div class="ibox float-e-margins">
+                    <div class="ibox-content">
+                        <div class="file-manager">
+                            <h5>显示：</h5>
+                            <a class="file-control active" onclick="changeType(this)">所有</a>
+                            <a class="file-control" th:each="dictionary : ${dictionary1}" th:text="${dictionary.dicName}" th:data="${dictionary.dicCode}" onclick="changeType(this)"></a>
+                            <div class="hr-line-dashed"></div>
+                            <button class="btn btn-primary btn-block">上传文件</button>
+                            <div class="hr-line-dashed"></div>
+                            <h5>文件夹</h5>
+                            <ul class="folder-list" style="padding: 0">
+                                <li th:each="dictionary : ${dictionary2}">
+                                    <a th:utext="|<i class='fa fa-folder'></i>${dictionary.dicName}|" th:data="${dictionary.dicCode}" onclick="flod(this)"></a>
+                                </li>
+                            </ul>
+                            <h5 class="tag-title">标签</h5>
+                            <ul class="tag-list" style="padding: 0">
+                                <li><a>爱人</a>
+                                </li>
+                                <li><a>工作</a>
+                                </li>
+                                <li><a>家庭</a>
+                                </li>
+                                <li><a>孩子</a>
+                                </li>
+                                <li><a>假期</a>
+                                </li>
+                                <li><a>音乐</a>
+                                </li>
+                                <li><a>照片</a>
+                                </li>
+                                <li><a>电影</a>
+                                </li>
+                            </ul>
+                            <div class="clearfix"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-9 animated fadeInRight">
+                <div class="row">
+                    <div class="col-sm-12">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <input type="hidden" id="fileFlod" value="1">
+        <input type="hidden" id="fileType" value="">
+
+    </div>
+
+    <!-- 全局js -->
+    <script src="/static/js/jquery.min.js?v=2.1.4"></script>
+    <script src="/static/js/bootstrap.min.js?v=3.3.6"></script>
+    <script type="text/javascript" th:src="|${basePath}/static/layui/layui.js|"></script>
+    <!-- Fancy box -->
+    <script src="/static/js/plugins/fancybox/jquery.fancybox.js"></script>
+    <!-- 自定义js -->
+    <script src="/static/js/content.js?v=1.0.0"></script>
+    <script src="/static/js/video.min.js"></script>
+
+    <script th:inline="javascript">
+        layui.use(['form','table'], function() {
+            var table = layui.table, form = layui.form;
+
+            $(".btn-block").click(function () {
+                layer.open({
+                    type: 2,
+                    area: ['800px', '600px'],
+                    title: '上传文件',
+                    skin: 'layui-layer-molv', //样式类名
+                    anim: 2,
+                    shadeClose: true, //开启遮罩关闭
+                    content: [[${basePath}]] + '/admin/addfile'
+                });
+            })
+        });
+
+        $(function () {
+            LoadList("","");
+        })
+
+        function LoadList(fileFlod,fileType) {
+            if(fileFlod == null || fileFlod == ''){
+                fileFlod = '1';
+            }
+            $.ajax({
+                type: 'POST',
+                url: [[${basePath}]] + '/admin/fileList',
+                data: {
+                    page : 1,
+                    limit : 9999,
+                    fileFlod : fileFlod,
+                    fileType : fileType
+                },
+                dataType: 'json',
+                success: function (data) {
+                    var len = data.data.length;
+                    var html = '';
+                    var filePath = "/files/"
+                    for(var i=0;i < len;i++){
+                        html += '<div class="file-box">';
+                        html += '   <div class="file">';
+                        html += '       <a>';
+                        if(fileFlod == "1"){
+                            html += '       <span title="重命名" class="corner"></span>';
+                        }else{
+                            html += '       <span title="保存到个人文件夹" class="corner"></span>';
+                        }
+                        if(fileFlod == "1" && i == 0){
+                            filePath += data.data[i].updator;
+                        }
+                        if(data.data[i].fileType == '1'){
+                            html += '       <div class="image" href="'+ filePath + '/' + data.data[i].fileName +'">';
+                            html += '           <img alt="image" class="img-responsive" src="'+ filePath + '/' + data.data[i].fileName +'">';
+                        }else if(data.data[i].fileType == '2'){
+                            html += '       <div class="icon" data="'+ filePath + '/' + data.data[i].fileName +'" onclick="download(this)">';
+                            html += '           <i class="fa fa-file"></i>';
+                        }else if(data.data[i].fileType == '3'){
+                            html += '        <div class="icon" data="'+ filePath + '/' + data.data[i].fileName +'" onclick="vadio(this)">';
+                            html += '           <i class="fa fa-music"></i>';
+                        }else if(data.data[i].fileType == '4'){
+                            html += '        <div class="icon" data="'+ filePath + '/' + data.data[i].fileName +'" onclick="vadio(this)">';
+                            html += '           <i class="img-responsive fa fa-film"></i>';
+                        }else{
+                            html += '       <div class="icon" data="'+ filePath + '/' + data.data[i].fileName +'" onclick="download(this)">';
+                            html += '            <i class="fa fa-bar-chart-o"></i>';
+                        }
+                        html += '            </div>';
+                        if(fileFlod == "1") {
+                            html += '        <div class="file-name" style="height: 53px">';
+                        }else{
+                            html += '         <div class="file-name" style="height: 69px">';
+                        }
+                        html += data.data[i].realName;
+                        html += '                   <br/>';
+                        if(fileFlod != '1'){
+                            html += '               <small>上传人：'+ data.data[i].updator +'</small>';
+                            html += '               <br/>';
+                        }
+                        html += '                   <small>添加时间：'+ data.data[i].createTimeStr +'</small>';
+                        html += '           </div>';
+                        html += '       </a>';
+                        html += '   </div>';
+                        html += '   <img src="/static/image/close.png" class="delete" data="'+ data.data[i].fileId +'"/>';
+                        html += '</div>';
+                    }
+                    $(".col-sm-12").html(html);
+                    animation();
+                },
+                error: function (data) {
+                    layer.msg("连接超时");
+                },
+            })
+        }
+
+        //切换文件夹
+        function flod(obj) {
+            var fileFlod = $(obj).attr("data");
+            var fileType = $("#fileType").val();
+            $("#fileFlod").val(fileFlod);
+            LoadList(fileFlod,fileType);
+        }
+        //切换类型
+        function changeType(obj) {
+            $(obj).addClass("active").siblings().removeClass("active");
+            var fileType = $(obj).attr("data");
+            var fileFlod = $("#fileFlod").val();
+            $("#fileType").val(fileType);
+            LoadList(fileFlod,fileType);
+        }
+        var timer = null;
+        //动画效果
+        function animation() {
+            $(".file-box").mouseenter(function () {
+                $(this).find(".delete").show();
+            });
+            $(".file-box").mouseleave(function () {
+                $(this).find(".delete").hide();
+            });
+
+            $('.file-box').each(function () {
+                animationHover(this, 'pulse');
+            });
+
+            $('.file-box .delete').each(function () {
+                animationHover(this, 'pulse');
+            });
+
+
+            $(".delete").click(function () {
+                var fileId = $(this).attr("data");
+                delFile(fileId);
+            })
+
+            $('.image').fancybox({
+                openEffect: 'none',
+                closeEffect: 'none'
+            });
+
+            $(".corner").click(function () {
+                var fileId = $(this).parents(".file").next().attr("data");
+                var fileFlod = $("#fileFlod").val();
+                if(fileFlod == "1"){
+                    rename(fileId);
+                }else{
+                    saveMe(fileId);
+                }
+
+            })
+
+        }
+
+        function delFile(fileId) {
+            var fileFlod = $("#fileFlod").val();
+            layer.confirm('确定要删除该文件么？', function(index){
+                $.ajax({
+                    type: 'POST',
+                    url: [[${basePath}]] + '/admin/delFile',
+                    data: {
+                        fileId : fileId,
+                        fileFlod:fileFlod
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        if(data.success){
+                            window.location.reload();
+                        }else{
+                            layer.msg(data.message);
+                        }
+                    },
+                    error: function(data) {
+                        layer.msg('您没有权限这么做!');
+                    },
+                });
+
+            });
+        }
+
+        function rename(fileId) {
+            layer.prompt({title: '重命名', formType: 3 }, function(pass, index){
+                $.ajax({
+                    type: 'POST',
+                    url: [[${basePath}]] + '/admin/rename',
+                    data: {
+                        fileId: fileId,
+                        fileName: pass
+                    },
+                    dataType: 'json',
+                    success: function (data) {
+                        if (data.success) {
+                            window.location.reload();
+                        } else {
+                            layer.msg("操作失败");
+                        }
+                    },
+                    error: function (data) {
+                        layer.msg('您没有权限这么做!');
+                    },
+                });
+            })
+        }
+
+
+        function saveMe(fileId) {
+            layer.confirm('确定要保存到个人文件夹中么？', function(index){
+                $.ajax({
+                    type: 'POST',
+                    url: [[${basePath}]] + '/admin/saveMe',
+                    data: {
+                        fileId : fileId,
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        if(data.success){
+                            layer.msg("保存成功");
+                        }else{
+                            layer.msg(data.message);
+                        }
+                    },
+                    error: function(data) {
+                        layer.msg('您没有权限这么做!');
+                    },
+                });
+            });
+        }
+
+        //视频播放
+        function vadio(obj){
+            var filePath = $(obj).attr("data");
+            layer.open({
+                type: 2,
+                title: false,
+                area: ['719px', '419px'],
+                shade: 0.8,
+                closeBtn: 0,
+                shadeClose: true,
+                content: "/admin/vadio?filePath=" + filePath
+            });
+        }
+
+        function download(obj) {
+            var filePath = $(obj).attr("data");
+            window.open(filePath, "_parent");
+        }
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.springframework.org/schema/data/jaxb">
+<head>
+    <meta charset="UTF-8">
+    <title>菜单管理</title>
+    <link rel="stylesheet" th:href="|${basePath}/static/layui/css/layui.css|" media="all" />
+    <script th:src="|${basePath}/static/js/jquery.min.js?v=2.1.4|"></script>
+    <script type="text/javascript" th:src="|${basePath}/static/layui/layui.js|"></script>
+    <script type="text/javascript" th:src="|${basePath}/static/js/jquery.md5.js|"></script>
+    <style>
+        .laytable-cell-1-0-2{overflow: visible !important;}
+        /* 使得下拉框与单元格刚好合适 */
+        td .layui-form-select{margin-top: -10px;margin-left: -15px;margin-right: -15px;}
+        .layui-form-select .layui-input { text-align: center;}
+    </style>
+</head>
+<body>
+<div style="padding-top: 12px;padding-left: 13px;padding-bottom: 10px;">
+    <label>用户名称：</label>
+    <div class="layui-inline">
+        <input class="layui-input" name="userName" id="userName" autocomplete="off">
+    </div>
+    <button class="layui-btn" id="do_search">查询</button>
+    <button class="layui-btn layui-btn-primary" id="do_clear">重置</button>
+</div>
+<table id="userList" lay-filter="userList"></table>
+<script type="text/html" id="barDemo">
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+</script>
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="addUser">新建用户</button>
+        <button class="layui-btn layui-btn-sm" lay-event="resetPwd">重置密码</button>
+        <button class="layui-btn layui-btn-sm" lay-event="getCheckData">权限配置</button>
+    </div>
+</script>
+</body>
+<script th:inline="javascript">
+    layui.use(['form','table'], function() {
+        var table = layui.table, form = layui.form;
+        //用户列表
+        table.render({
+            elem: '#userList',
+            url: [[${basePath}]] + '/admin/ListUser',
+            toolbar: '#toolbarDemo',
+            page: true,
+            height: 'full-85',
+            limits: [10, 15, 20, 25],
+            limit: 10,
+            id: "userListTable",
+            cols: [ [
+                {type: 'radio', fixed: "left", width: 50},
+                {field: 'userName', title: '用户名', minWidth: 100, align: 'center',edit: 'text'},
+                {field: 'userRole', title: '用户角色', minWidth: 100, align: 'center', templet: function (d) {
+                        var html = '';
+                        var dictionary = [[${dictionary}]];
+                        var len = [[${dictionary.size()}]];
+                        html += ' <select name="userRole" id="userRole" lay-filter="test" data="'+ d.userId +'" >';
+                        for(var i=0;i < len; i++){
+                            var selected = "";
+                            if(dictionary[i].dicCode == d.userRole){
+                                selected = "selected";
+                            }else{
+                                selected = ""
+                            }
+                            html += '<option value="' + dictionary[i].dicCode + '"'+ selected +'>'+ dictionary[i].dicName +'</option>';
+                        }
+                        html += ' </select>';
+                        return html;
+                }},
+                {field: 'createTimeStr', title: '注册时间', minWidth: 100, align: 'center'},
+                {field: 'permissesStr', title: '用户权限', minWidth: 100, align: 'center'},
+                {fixed: 'right', title:'操作', toolbar: '#barDemo', align: 'center',width:110}
+            ] ]
+        });
+
+        //头工具栏事件
+        table.on('toolbar(userList)', function(obj){
+            var checkStatus = table.checkStatus(obj.config.id);
+            var len = checkStatus.data.length;
+            if(obj.event == 'getCheckData'){
+                if(len == 0){
+                    layer.msg("请选择一行数据操作");
+                    return;
+                }
+                layer.open({
+                    type: 2,
+                    area: ['500px', '250px'],
+                    fixed: false, //不固定
+                    title:"授权",
+                    maxmin: false,
+                    content: [[${basePath}]] + '/admin/grant',
+                    success: function (layero, index) {
+                        // 获取子页面的iframe
+                        var iframe = window['layui-layer-iframe' + index];
+                        // 向子页面的全局函数child传参
+                        iframe.getData(checkStatus.data);
+                    }
+                });
+            }else if(obj.event == 'resetPwd'){
+                if(len == 0){
+                    layer.msg("请选择一行数据操作");
+                    return;
+                }
+                layer.confirm('您确定要重置该用户的密码吗', function(index){
+                    //固定盐1a2b3c
+                    var userPwd = $.md5("1234561a2b3c");
+                    $.ajax({
+                        type: 'POST',
+                        url: [[${basePath}]] + '/admin/resetPwd',
+                        data: {
+                            userId : checkStatus.data[0].userId,
+                            userPwd : userPwd,
+                        },
+                        dataType: 'json',
+                        success: function(data) {
+                            layer.msg("重置成功");
+                        },
+                        error: function(data) {
+                            layer.msg('您没有权限这么做！');
+                        },
+                    });
+                });
+            }
+            else if(obj.event == 'addUser'){
+                layer.open({
+                    type: 2,
+                    area: ['600px', '300px'],
+                    fixed: false, //不固定
+                    title:"新增用户 ",
+                    maxmin: false,
+                    content: [[${basePath}]] + '/admin/addUserRole'
+                });
+            }
+        });
+
+        //监听工具条
+        table.on('tool(userList)', function(obj){
+            var data = obj.data;
+            layer.confirm('确定要删除该用户么？', function(index){
+                $.ajax({
+                    type: 'POST',
+                    url: [[${basePath}]] + '/admin/deleteUser',
+                    data: {
+                        userId : data.userId,
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        obj.del();
+                        layer.close(index);
+                        layer.msg("删除成功");
+                    },
+                    error: function(data) {
+                        layer.msg('您没有权限这么做！');
+                    },
+                });
+
+            });
+        });
+
+        form.on('select(test)', function(obj){
+            var userId = $(this).parent().parent().prev().attr("data");
+            var userRole = obj.value;
+            $.ajax({
+                type: 'POST',
+                url: [[${basePath}]] + '/admin/alterUserRole',
+                data: {
+                    userId : userId,
+                    userRole : userRole,
+                },
+                dataType: 'json',
+                success: function(data) {
+                    if(data.success){
+                        layer.msg("修改成功");
+                    }else{
+                        layer.msg("修改失败");
+                    }
+                },
+                error: function(data) {
+                    layer.msg('您没有权限这么做！');
+                },
+            });
+
+        });
+
+        //监听单元格编辑
+        table.on('edit(userList)', function(obj){
+            var value = obj.value //得到修改后的值
+            var data = obj.data //得到所在行所有键值
+            var field = obj.field; //得到字段
+            
+            if(value == ''){
+                table.reload('userListTable');
+                layer.msg("不能修改为空值！");
+                return;
+            }
+            $.ajax({
+                type: 'POST',
+                url: [[${basePath}]] + '/admin/alterUserRole',
+                data: {
+                    userId : data.userId,
+                    userName : value
+                },
+                dataType: 'json',
+                success: function(data) {
+                    layer.msg("修改成功");
+                },
+                error: function(data) {
+                    layer.msg('您没有权限这么做');
+                },
+            });
+        });
+        
+        //搜索
+        $('#do_search').on('click', function () {
+            // 搜索条件
+            var userName = $('#userName').val();
+            reloadList(userName);
+        });
+        //重置
+        $('#do_clear').on('click', function () {
+            // 搜索条件
+            $('#userName').val("");
+            reloadList("");
+        });
+
+        function reloadList(userName){
+            tableIns = table.reload('userListTable', {
+                method: 'post'
+                , where: {
+                    'userName': userName,
+                }
+                , page: {
+                    curr: 1
+                }
+            });
+        }
+    })
+
+</script>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.springframework.org/schema/data/jaxb">
+<head>
+    <meta charset="UTF-8">
+    <title>菜单管理</title>
+    <link rel="stylesheet" th:href="|${basePath}/static/layui/css/layui.css|" media="all" />
+    <script th:src="|${basePath}/static/js/jquery.min.js?v=2.1.4|"></script>
+    <script type="text/javascript" th:src="|${basePath}/static/layui/layui.js|"></script>
+    <style>
+        .laytable-cell-1-0-2{overflow: visible !important;}
+    </style>
+</head>
+<body>
+    <div style="padding-top: 12px;padding-left: 13px;padding-bottom: 10px;">
+        <label>操作用户：</label>
+        <div class="layui-inline">
+            <input class="layui-input" name="userName" id="userName" autocomplete="off">
+        </div>
+        <label>操作时间：</label>
+        <div class="layui-inline" style="width: 150px">
+            <input class="layui-input" name="createTimeStr" id="createTimeStr" autocomplete="off">
+        </div>
+        <button class="layui-btn" id="do_search">查询</button>
+        <button class="layui-btn layui-btn-primary" id="do_clear">重置</button>
+    </div>
+    <table id="logList" lay-filter="logList"></table>
+    <script type="text/html" id="toolbarDemo">
+        <div class="layui-btn-container">
+            <button class="layui-btn layui-btn-sm" lay-event="del">清空历史日志</button>
+        </div>
+    </script>
+</body>
+<script th:inline="javascript">
+
+    layui.use(['form','table','laydate'], function() {
+        var table = layui.table, form = layui.form ,laydate = layui.laydate;
+        //日期
+        laydate.render({elem: '#createTimeStr'});
+
+        //用户列表
+        table.render({
+            elem: '#logList',
+            url: [[${basePath}]] + '/admin/logList',
+            page: true,
+            toolbar: '#toolbarDemo',
+            height: 'full-85',
+            limits: [10, 15, 20, 25],
+            limit: 10,
+            id: "logListTable",
+            cols: [ [
+                {type: 'radio', fixed: "left", width: 50},
+                {field: 'userName', title: '操作用户', width: 100, align: 'center'},
+                {field: 'userAction', title: '用户操作', width: 150,align: 'center'},
+                {field: 'args', title: '输入参数', minWidth: 100,align: 'center'},
+                {field: 'createTimeStr', title: '操作时间', width: 200,align: 'center'},
+                {field: 'className', title: '操作类名', width: 380,align: 'center'},
+            ] ]
+        });
+
+        //头工具栏事件
+        table.on('toolbar(logList)', function(obj){
+            var checkStatus = table.checkStatus(obj.config.id);
+            var len = checkStatus.data.length;
+            if(obj.event == 'del'){
+                $.ajax({
+                    type: 'POST',
+                    url: [[${basePath}]] + '/admin/clearLog',
+                    dataType: 'json',
+                    success: function(data) {
+                        if(data.success){
+                            layer.msg("已成功清空一周前的日志：" + data.data + "条");
+                            reloadList();
+                        }else{
+                            layer.msg("清空失败！")
+                        }
+
+                    },
+                    error: function(data) {
+                        layer.msg('您没有权限这么做！');
+                    },
+                });
+            }
+        });
+
+        //搜索
+        $('#do_search').on('click', function () {
+            // 搜索条件
+            var userName = $('#userName').val();
+            var createTimeStr = $('#createTimeStr').val();
+            reloadList(userName,createTimeStr);
+        });
+        //重置
+        $('#do_clear').on('click', function () {
+            // 搜索条件
+            $('#userName').val("");
+            $('#createTimeStr').val("");
+            reloadList("","");
+        });
+
+        function reloadList(userName,createTimeStr){
+            tableIns = table.reload('logListTable', {
+                method: 'post'
+                , where: {
+                    'userName': userName,
+                    'createTimeStr': createTimeStr
+                }
+                , page: {
+                    curr: 1
+                }
+            });
+        }
+    })
+
+</script>
+</html>

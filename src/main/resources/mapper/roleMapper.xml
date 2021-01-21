@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.zlin.demo.dao.RoleMapper">
+	<resultMap id="ResultMap" type="cn.zlin.demo.domain.Role">
+		<id column="ROLE_ID" property="roleId" jdbcType="DECIMAL" />
+		<result column="ROLE_NAME" property="roleName" jdbcType="VARCHAR" />
+	</resultMap>
+
+    <!-- 权限列表 -->
+    <select id="roleList"  resultMap="ResultMap">
+		SELECT * FROM rolemsg_info T
+		<include refid="find_where" />
+	</select>
+
+	<!-- 权限列表数目 -->
+	<select id="countList" resultType="Long">
+		SELECT COUNT(1) FROM rolemsg_info T
+		<include refid="find_where" />
+	</select>
+
+	<sql id="find_where">
+		WHERE T.IS_VALID = '1'
+		<if test="roleName !=null and roleName != ''">
+			AND T.ROLE_NAME LIKE CONCAT(CONCAT('%',#{roleName,jdbcType=VARCHAR}),'%')
+		</if>
+	</sql>
+
+	<!-- 更新权限 -->
+	<update id="updateRole" parameterType="cn.zlin.demo.domain.Role">
+		UPDATE rolemsg_info
+		<set>
+			<if test="roleName != null and roleName != ''">
+				ROLE_NAME = #{roleName,jdbcType=VARCHAR},
+			</if>
+			UPDATOR = #{userId,jdbcType=DECIMAL},
+			UPDATE_TIME = now()
+		</set>
+		WHERE
+		ROLE_ID = #{roleId,jdbcType=DECIMAL}
+	</update>
+
+	<!-- 删除权限 -->
+	<update id="deleteRole" parameterType="cn.zlin.demo.domain.Role">
+		UPDATE rolemsg_info
+		<set>
+			IS_VALID = '0',
+			UPDATOR = #{userId,jdbcType=DECIMAL},
+			UPDATE_TIME = now()
+		</set>
+		WHERE
+		ROLE_ID = #{roleId,jdbcType=DECIMAL}
+	</update>
+
+	<!-- 新增权限 -->
+	<insert id="addRole" parameterType="cn.zlin.demo.domain.Role">
+	INSERT INTO rolemsg_info
+	(
+		ROLE_NAME,
+		CREATE_TIME,
+		UPDATE_TIME,
+		UPDATOR,
+		IS_VALID
+	)
+	VALUES(
+		#{roleName,jdbcType=VARCHAR},
+		now(),
+		now(),
+		#{userId,jdbcType=DECIMAL},
+		'1'
+	)
+	</insert>
+
+	<!-- 通过权限ID查询名称 -->
+	<select id="selectRoleName" resultType="String">
+		SELECT ROLE_NAME FROM rolemsg_info WHERE IS_VALID = '1' AND ROLE_ID = #{roleId,jdbcType=DECIMAL}
+	</select>
+</mapper>

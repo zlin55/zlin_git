@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.zlin.demo.dao.UserMapper">
+	<resultMap id="ResultMap" type="cn.zlin.demo.domain.User">
+		<id column="USER_ID" property="userId" jdbcType="DECIMAL" />
+		<result column="USER_NAME" property="userName" jdbcType="VARCHAR" />
+		<result column="USER_PWD" property="userPwd" jdbcType="VARCHAR" />
+		<result column="USER_ROLE" property="userRole" jdbcType="VARCHAR" />
+		<result column="CREATE_TIME" property="createTime" jdbcType="TIMESTAMP" />
+		<result column="SALT" property="salt" jdbcType="VARCHAR" />
+		<result column="AVATAR" property="avatar" jdbcType="VARCHAR" />
+		<result column="MEMPHONE" property="memPhone" jdbcType="VARCHAR" />
+	</resultMap>
+
+	<resultMap id="ResultRole" type="cn.zlin.demo.domain.Role">
+		<id column="ID" property="Id" jdbcType="DECIMAL" />
+		<result column="USER_ID" property="userId" jdbcType="DECIMAL" />
+		<result column="ROLE_ID" property="roleId" jdbcType="DECIMAL" />
+		<result column="ROLE_NAME" property="roleName" jdbcType="VARCHAR" />
+	</resultMap>
+
+	<resultMap id="ResultPermiss" type="cn.zlin.demo.domain.UserPermiss">
+		<id column="ROLE_ID" property="roleId" jdbcType="DECIMAL" />
+		<result column="ROLE_NAME" property="roleName" jdbcType="VARCHAR" />
+	</resultMap>
+
+    <!-- 登录验证 -->
+    <select id="getPassword"  resultMap="ResultMap">
+		SELECT * FROM user_info where IS_VALID='1' AND USER_NAME = #{username,jdbcType=VARCHAR}
+	</select>
+
+    <!-- 获取用户身份 -->
+    <select id="getRole"  resultType="String">
+		SELECT USER_ROLE FROM user_info where IS_VALID='1' AND USER_NAME = #{username,jdbcType=VARCHAR}
+	</select>
+
+	<!-- 通过手机号获取用户信息-->
+	<select id="getUserInfoByPhone" resultMap="ResultMap">
+		SELECT * FROM user_info WHERE IS_VALID = '1' AND MEMPHONE = #{memPhone,jdbcType=VARCHAR}
+	</select>
+
+
+	<!-- 获取用户所有权限 -->
+	<select id="getAllRole"  resultMap="ResultRole">
+		SELECT
+			T.USER_ID,
+			A.ROLE_ID,
+			A.ROLE_NAME
+		FROM user_info T
+		INNER JOIN role_info V ON T.USER_ID = V.USER_ID AND V.IS_VALID = '1'
+		INNER JOIN rolemsg_info A ON A.ROLE_ID = V.ROLE_ID AND A.IS_VALID = '1'
+		where T.IS_VALID='1' AND T.USER_NAME = #{username,jdbcType=VARCHAR}
+	</select>
+
+	<!-- 用户列表数据 -->
+	<select id="ListUser" resultMap="ResultMap">
+ 		SELECT * FROM user_info T
+		<include refid="find_where" />
+ 	</select>
+
+	<!-- 用户列表数据数量 -->
+	<select id="countList" resultType="Long">
+		SELECT COUNT(1) FROM user_info T
+		<include refid="find_where" />
+	</select>
+
+	<sql id="find_where">
+		WHERE T.IS_VALID = '1'
+		<if test="userName !=null and userName != ''">
+			AND T.USER_NAME LIKE CONCAT(CONCAT('%',#{userName,jdbcType=VARCHAR}),'%')
+		</if>
+	</sql>
+
+	<!-- 用户拥有权限列表 -->
+	<select id="ListPermiss" resultMap="ResultPermiss">
+		SELECT * FROM role_info t
+		INNER JOIN rolemsg_info v ON t.ROLE_ID = v.ROLE_ID AND v.IS_VALID = '1'
+		WHERE t.IS_VALID = '1'
+		AND t.USER_ID = #{userId,jdbcType=DECIMAL}
+	</select>
+
+	<!-- 删除用户 -->
+	<update id="deleteUser" parameterType="cn.zlin.demo.domain.User">
+		UPDATE user_info
+		<set>
+			IS_VALID = '0',
+			UPDATOR = #{updator,jdbcType=DECIMAL},
+			UPDATE_TIME = now()
+		</set>
+		WHERE
+		USER_ID = #{userId,jdbcType=DECIMAL}
+	</update>
+
+	<!-- 删除用户权限 -->
+	<update id="delUserRole" parameterType="Long">
+		UPDATE role_info
+		<set>
+			IS_VALID = '0',
+			UPDATOR = #{updator,jdbcType=DECIMAL},
+			UPDATE_TIME = now()
+		</set>
+		WHERE
+		USER_ID = #{userId,jdbcType=DECIMAL}
+	</update>
+
+	<!-- 插入用户权限 -->
+	<insert id="insertRole" parameterType="java.util.List">
+		INSERT INTO role_info
+		(
+			USER_ID,
+			ROLE_ID,
+			IS_VALID,
+			CREATE_TIME,
+			UPDATE_TIME,
+			UPDATOR
+		)
+		VALUES
+		<foreach collection="list" item="item" index="index" separator=",">
+		(
+			#{item.userId,jdbcType=DECIMAL},
+			#{item.roleId,jdbcType=DECIMAL},
+			'1',
+			now(),
+			now(),
+			#{item.updator,jdbcType=DECIMAL}
+		)
+		</foreach>
+	</insert>
+
+	<!-- 重置密码 -->
+	<update id="resetPwd" parameterType="cn.zlin.demo.domain.User">
+		UPDATE user_info
+		<set>
+			<if test="userPwd != null and userPwd != ''">
+				USER_PWD = #{userPwd,jdbcType=VARCHAR},
+			</if>
+			<if test="salt != null and salt != ''">
+				SALT = #{salt,jdbcType=VARCHAR},
+			</if>
+			UPDATOR = #{updator,jdbcType=DECIMAL},
+			UPDATE_TIME = now()
+		</set>
+		WHERE
+		USER_ID = #{userId,jdbcType=DECIMAL} AND IS_VALID = '1'
+	</update>
+
+	<!-- 修改用户信息 -->
+	<update id="alterUserRole" parameterType="cn.zlin.demo.domain.User">
+		UPDATE user_info
+		<set>
+			<if test="userRole != null and userRole != ''">
+				USER_ROLE = #{userRole,jdbcType=VARCHAR},
+			</if>
+			<if test="avatar != null and avatar != ''">
+				AVATAR = #{avatar,jdbcType=VARCHAR},
+			</if>
+			<if test="userName != null and userName != ''">
+				USER_NAME = #{userName,jdbcType=VARCHAR},
+			</if>
+			UPDATOR = #{updator,jdbcType=DECIMAL},
+			UPDATE_TIME = now()
+		</set>
+		WHERE
+		USER_ID = #{userId,jdbcType=DECIMAL}
+	</update>
+
+	<!-- 新增用户-->
+	<insert id="addUser" parameterType="cn.zlin.demo.domain.User">
+		INSERT INTO user_info
+		(
+			USER_NAME,
+			USER_PWD,
+			USER_ROLE,
+			IS_VALID,
+			CREATE_TIME,
+			UPDATE_TIME,
+			UPDATOR,
+			SALT
+		)VALUES(
+			#{userName,jdbcType=VARCHAR},
+			#{userPwd,jdbcType=VARCHAR},
+			#{userRole,jdbcType=VARCHAR},
+			'1',
+			now(),
+			now(),
+			#{updator,jdbcType=DECIMAL},
+			#{salt,jdbcType=VARCHAR}
+		)
+	</insert>
+
+	<!-- 用户名是否存在 -->
+	<select id="userExits" resultType="Long">
+		SELECT COUNT(1) FROM user_info WHERE USER_NAME = #{userName,jdbcType=VARCHAR}
+	</select>
+</mapper>

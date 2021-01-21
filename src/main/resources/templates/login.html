@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html class="loginHtml" xmlns:th="http://www.springframework.org/schema/jdbc">
+<head>
+    <meta charset="utf-8">
+    <title>登录-后台管理系统</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="icon" th:href="|${basePath}/static/logo.png|">
+    <link rel="stylesheet" th:href="|${basePath}/static/layui/css/layui.css|" media="all" />
+    <link rel="stylesheet" th:href="|${basePath}/static/css/public.css|" media="all" />
+</head>
+<body class="loginBody">
+<form class="layui-form" id="loginForm">
+    <div class="login_face"><img th:src="|${basePath}/static/logo.png|" class="userAvatar"></div>
+    <div id="model1">
+        <div class="layui-form-item input-item">
+            <label for="userName">用户名</label>
+            <input type="text" placeholder="请输入用户名" autocomplete="off" id="userName" name="userName" class="layui-input">
+        </div>
+        <div class="layui-form-item input-item">
+            <label for="password">密码</label>
+            <input type="hidden" id="userPwd" name="userPwd">
+            <input type="password" placeholder="请输入密码" autocomplete="off" id="userPwds"  name="userPwds"  class="layui-input">
+        </div>
+        <div class="layui-form-item input-item" id="imgCode">
+            <label for="code">验证码</label>
+            <input type="text" placeholder="请输入验证码" id="imageCode" name="imageCode"  autocomplete="off"  class="layui-input">
+            <!--验证码通过接口获取-->
+            <img id="imgObj" title="看不清，换一张" th:src="|${basePath}/drawImage|" onclick="changeImg()"/>
+        </div>
+    </div>
+    <div id="model2" style="display: none">
+        <div class="layui-form-item input-item">
+            <label for="userName">手机号</label>
+            <input type="text" placeholder="请输入手机号" autocomplete="off" id="memPhone" name="memPhone" class="layui-input">
+        </div>
+        <div class="layui-form-item input-item">
+            <label for="userName">验证码</label>
+            <input type="text" placeholder="请输入验证码" autocomplete="off" id="code" name="code" maxlength="6" class="layui-input" style="width: 50%;display: inline">
+            <input type="button" class="layui-btn layui-btn-primary" value="获取验证码" id="sendBtn" style="width:41%;margin-left: 18px;border-color:#1e9fff !important;" onclick="sendCode(this)"></input>
+        </div>
+    </div>
+    <!--<div class="layui-form-item input-item"><a style="float: right;cursor: pointer;color: #1e9fff;line-height: 0.1" onclick="switchMolde(this)">短信快捷登录></a></div>-->
+    <input type="hidden" id="model" name="model" value="1"/>
+    <div class="layui-form-item">
+        <input type="button" class="layui-btn layui-block" value="登录" onclick="submitForm();"></input>
+    </div>
+</form>
+<script th:src="|${basePath}/static/js/jquery.min.js?v=2.1.4|"></script>
+<script type="text/javascript" th:src="|${basePath}/static/layui/layui.js|"></script>
+<script type="text/javascript" th:src="|${basePath}/static/js/login.js|"></script>
+<script type="text/javascript" th:src="|${basePath}/static/js/cache.js|"></script>
+<script type="text/javascript" th:src="|${basePath}/static/js/verifyCode.js|"></script>
+<script type="text/javascript" th:src="|${basePath}/static/js/jquery.md5.js|"></script>
+<script>
+    layui.use(['jquery', 'layer', 'form'], function () {
+        var layer = layui.layer,
+            $ = layui.jquery,
+            form = layui.form;
+    });
+
+    //切换登录模式
+    function switchMolde(obj) {
+        var text = $(obj).text();
+        if(text == '短信快捷登录>'){
+            $("#model1").css("display","none");
+            $("#model2").css("display","block");
+            $(obj).text('账号密码登录>');
+            $("#model").val("2");//短信登录
+        }else{
+            $("#model1").css("display","block");
+            $("#model2").css("display","none");
+            $(obj).text('短信快捷登录>');
+            $("#model").val("1");//账号密码登录
+        }
+    }
+    //手机验证码
+    function sendCode(){
+        var memPhone = $("#memPhone").val();
+        console.log(memPhone.length);
+        if(memPhone == '' || memPhone.length != 11){
+            layer.msg("请输入正确的手机号！");
+            return;
+        }else{
+            $.ajax({
+                type: 'GET',
+                url: '[[${basePath}]]/fitness/code',
+                data: {
+                    memPhone : memPhone
+                },
+                dataType: 'json',
+                success: function(data) {
+                   if(data){
+                       timer();
+                   }else{
+                       layer.msg("获取验证码失败");
+                   }
+                },
+                error: function(data) {
+                    layer.msg('连接超时！');
+                },
+            });
+        }
+    }
+    var wait = 60;
+    //倒计时
+    function timer() {
+        if(wait == 0){
+            $("#sendBtn").val("获取验证码");
+            $("#sendBtn").removeAttr("disabled");
+            $("#sendBtn").css("cssText","width:41%;margin-left: 18px;border-color:#1e9fff!important;").css("background", "#ffffff").css("cursor", "pointer");
+            wait = 60;
+        }else{
+            $("#sendBtn").attr("disabled","true");
+            $("#sendBtn").css("cssText","width:41%;margin-left: 18px;border-color:#fbfbfb!important;").css("background", "#ccc").css("cursor", "not-allowed");
+            $("#sendBtn").val(wait + "秒后重发");
+            wait--;
+            setTimeout(function() {timer()}, 1000);
+        }
+    }
+
+    //登录
+    function submitForm() {
+        if($("#model").val() == "1"){
+            var userName = $("#userName").val();
+            var userPwds = $("#userPwds").val();
+            var imageCode = $("#imageCode").val();
+            if(userName == '')  {layer.msg("用户名不能为空！");return;}
+            if(userPwds == '')   {layer.msg("密码不能为空！");  return;}
+            if(imageCode == '') {layer.msg("验证码不能为空！");  return;}
+            //MD5加密密码
+            var salt = "1a2b3c";
+            var pwdMd5 = $.md5(userPwds + salt);
+            $("#userPwd").val(pwdMd5);
+        }else{
+            var memPhone = $("#memPhone").val();
+            var code = $("#code").val();
+            if(memPhone == '')  {layer.msg("手机号不能为空！");return;}
+            if(code == '')   {layer.msg("验证码不能为空！");  return;}
+        }
+        $.ajax({
+            type: 'POST',
+            url: '[[${basePath}]]/login',
+            data: $('#loginForm').serialize(),
+            dataType: 'json',
+            success: function(data) {
+                if(data.success){
+                    window.location.href = '[[${basePath}]]/'+ data.data +'/index';
+                }else{
+                    layer.msg(data.message);
+                }
+            },
+            error: function(data) {
+                layer.msg('连接超时！');
+            },
+        });
+    }
+
+</script>
+</body>
+</html>
+<script type="text/javascript">
+    /*session过期后登陆页面跳出iframe页面问题
+    登陆页面增加javascript*/
+    if (top.location !== self.location) {
+        top.location = self.location;
+    }
+</script>

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.springframework.org/schema/data/jaxb">
+<head>
+    <meta charset="UTF-8">
+    <title>售价</title>
+    <link rel="stylesheet" th:href="|${basePath}/static/layui/css/layui.css|" media="all" />
+    <script th:src="|${basePath}/static/js/jquery.min.js?v=2.1.4|"></script>
+    <script type="text/javascript" th:src="|${basePath}/static/layui/layui.js|"></script>
+    <script type="text/javascript" th:src="|${basePath}/static/js/jquery.md5.js|"></script>
+</head>
+<body>
+<form class="layui-form" id="computerForm">
+    <input type="hidden" name="conId" id="conId" th:value="${conId}">
+    <input type="hidden" name="comZhuangTai" id="comZhuangTai" value="0">
+  <!--  <div class="layui-form-item" style="padding-top: 20px">
+        <label class="layui-form-label">收价：</label>
+        <div class="layui-input-block" style="width: 75%">
+            <input type="text"   readonly="readonly" th:value="${comBugPrice}"   lay-verify="required" autocomplete="off"   class="layui-input">
+        </div>
+        <label class="layui-form-label">售价:</label>
+        <div class="layui-input-block" style="width: 75%">
+            <input type="text" id="comSolePrice" oninput = "value=value.replace(/[^\d]/g,'')" maxlength="5"   name="comSolePrice"  lay-verify="required" autocomplete="off"    placeholder="请输入售价" class="layui-input">
+        </div>
+        <div style="position: fixed;bottom: 20px;text-align: center;width: 100%;">
+            <input type="button" class="layui-btn" onclick="save();" value="保存"></input>
+        </div>
+    </div>-->
+
+    <div class="layui-form-item" style="padding-top: 17px">
+        <label class="layui-form-label">收价：</label>
+        <div class="layui-input-block" style="width: 75%">
+            <input type="text"   readonly="readonly" th:value="${comBugPrice}"   lay-verify="required" autocomplete="off"   class="layui-input">
+        </div>
+    </div>
+
+    <div class="layui-form-item" style="padding-top: 17px">
+        <label class="layui-form-label">售价：</label>
+        <div class="layui-input-block" style="width: 75%">
+            <input type="text" id="comSolePrice" oninput = "value=value.replace(/[^\d]/g,'')" maxlength="5"   name="comSolePrice"  lay-verify="required" autocomplete="off"    placeholder="请输入售价" class="layui-input">
+        </div>
+    </div>
+    <div style="position: fixed;bottom: 20px;text-align: center;width: 100%;" >
+        <input type="button" class="layui-btn" onclick="save();" value="保存"></input>
+    </div>
+
+</form>
+
+<script>
+    var index = parent.layer.getFrameIndex(window.name); //获取窗口索引
+    layui.use(['jquery','layer','form'],function(){
+        var $=layui.jquery
+            ,layer=layui.layer
+            ,form=layui.form
+    });
+
+    function save(){
+        var comSolePrice = $("#comSolePrice").val();
+        if(comSolePrice == ""){
+            layer.msg("请输入电脑售价");
+            return;
+        }
+        $.ajax({
+            type: 'POST',
+            url: '[[${basePath}]]/computerInfo/save',
+            data: $('#computerForm').serialize(),
+            dataType: 'json',
+            success: function(data) {
+                if(data.result) {
+                    layer.msg("修改售价成功！");
+                    setTimeout(function(){
+                        parent.tools.func1();
+                        parent.layer.close(index); }, 1000);
+
+                }else{
+                    layer.msg("添加失败");
+                }
+            },
+            error: function(data) {
+                layer.msg('连接超时！');
+            },
+        });
+    }
+</script>
+</body>
+</html>

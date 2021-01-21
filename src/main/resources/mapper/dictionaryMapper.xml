@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cn.zlin.demo.dao.DictionaryMapper">
+	<resultMap id="ResultMap" type="cn.zlin.demo.domain.Dictionary">
+		<result column="PAR_CODE" property="parCode" jdbcType="VARCHAR" />
+		<result column="DIC_CODE" property="dicCode" jdbcType="VARCHAR" />
+		<result column="DIC_NAME" property="dicName" jdbcType="VARCHAR" />
+		<result column="PIC_CODE" property="picCode" jdbcType="VARCHAR" />
+	</resultMap>
+
+	<!-- 字典翻译 -->
+	<select id="CodeTsfName" resultType="String">
+		SELECT DIC_NAME FROM dictionary_info
+		WHERE IS_VALID = '1'
+		AND PAR_CODE = #{parCode,jdbcType=VARCHAR}
+		AND DIC_CODE = #{dicCode,jdbcType=VARCHAR}
+	</select>
+
+	<!-- 通过字典编码获取字典内容 -->
+	<select id="getDictionaryByCode" resultMap="ResultMap">
+		SELECT * FROM dictionary_info
+		WHERE IS_VALID = '1'
+		AND PAR_CODE = #{code,jdbcType=VARCHAR}
+		AND IS_DIC = '0'
+	</select>
+
+	<!-- 字典列表 -->
+	<select id="dicList" resultMap="ResultMap">
+		SELECT * FROM dictionary_info T
+		<include refid="find_where" />
+		ORDER BY PAR_CODE
+	</select>
+
+	<select id="countList" resultType="Long">
+		SELECT COUNT(1) FROM dictionary_info T
+		<include refid="find_where" />
+	</select>
+
+	<sql id="find_where">
+		WHERE T.IS_VALID = '1' AND T.IS_DIC = '1'
+		<if test="parCode !=null and parCode != ''">
+			AND T.PAR_CODE LIKE CONCAT(CONCAT('%',#{parCode,jdbcType=VARCHAR}),'%')
+		</if>
+		<if test="dicName !=null and dicName != ''">
+			AND T.DIC_NAME LIKE CONCAT(CONCAT('%',#{dicName,jdbcType=VARCHAR}),'%')
+		</if>
+	</sql>
+
+	<!-- 字典选项列表 -->
+	<select id="contentList" resultMap="ResultMap">
+		SELECT * FROM dictionary_info
+		WHERE IS_VALID = '1'
+		AND IS_DIC = '0'
+		AND PAR_CODE = #{parCode,jdbcType=VARCHAR}
+	</select>
+
+	<!-- 新增字典 -->
+	<insert id="insertDict" parameterType="cn.zlin.demo.domain.Dictionary">
+		INSERT INTO dictionary_info
+		(
+			PAR_CODE,
+			PIC_CODE,
+			DIC_CODE,
+			DIC_NAME,
+			IS_DIC,
+			IS_VALID,
+			CREATE_TIME,
+			UPDATE_TIME,
+			UPDATOR
+		)VALUES (
+			#{parCode,jdbcType=VARCHAR},
+			#{picCode,jdbcType=VARCHAR},
+			#{dicCode,jdbcType=VARCHAR},
+			#{dicName,jdbcType=VARCHAR},
+			#{isDic,jdbcType=VARCHAR},
+			'1',
+			now(),
+			now(),
+			#{updator,jdbcType=DECIMAL}
+		)
+	</insert>
+
+	<!-- 查询字典编码是否已经被使用 -->
+	<select id="checkDict" resultType="Long">
+		SELECT COUNT(1) FROM dictionary_info WHERE PAR_CODE = #{parCode,jdbcType=VARCHAR} AND IS_VALID = '1'
+	</select>
+
+	<delete id="deleteDict" parameterType="cn.zlin.demo.domain.Dictionary">
+		UPDATE dictionary_info
+		<set>
+			IS_VALID = '0',
+			UPDATE_TIME = now(),
+			UPDATOR = #{updator,jdbcType=DECIMAL}
+		</set>
+		WHERE
+			PAR_CODE = #{parCode,jdbcType=VARCHAR}
+	</delete>
+</mapper>

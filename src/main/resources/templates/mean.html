@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>菜单管理</title>
+    <link rel="stylesheet" th:href="|${basePath}/static/layui/css/layui.css|" media="all" />
+    <script th:src="|${basePath}/static/js/jquery.min.js?v=2.1.4|"></script>
+    <script type="text/javascript" th:src="|${basePath}/static/layui/layui.js|"></script>
+    <style>
+        .layui-table-cell {overflow: visible !important;}
+        /* 使得下拉框与单元格刚好合适 */
+        td .layui-form-select{margin-top: -10px;margin-left: -15px;margin-right: -15px;}
+        .layui-form-select .layui-input { text-align: center;}
+    </style>
+</head>
+<body>
+    <div style="padding-top: 12px;padding-left: 13px;padding-bottom: 10px;">
+        <label>菜单名称：</label>
+        <div class="layui-inline">
+            <input class="layui-input" name="meanName" id="meanName" autocomplete="off">
+        </div>
+        <button class="layui-btn" id="do_search">查询</button>
+        <button class="layui-btn layui-btn-primary" id="do_clear">重置</button>
+    </div>
+    <table id="meanList" lay-filter="meanList"></table>
+    <script type="text/html" id="barDemo">
+        <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="del">删除</a>
+    </script>
+    <script type="text/html" id="toolbarDemo">
+        <div class="layui-btn-container">
+            <button class="layui-btn layui-btn-sm" lay-event="add">新增菜单</button>
+            <button class="layui-btn layui-btn-sm" lay-event="alterRole">权限配置</button>
+        </div>
+    </script>
+</body>
+<script th:inline="javascript">
+
+    layui.use(['form','table'], function() {
+        var table = layui.table, form = layui.form;
+        //用户列表
+        table.render({
+            elem: '#meanList',
+            url: [[${basePath}]] + '/admin/meanList',
+            toolbar: '#toolbarDemo',
+            page: true,
+            height: 'full-85',
+            limits: [10, 15, 20, 25],
+            limit: 10,
+            id: "meanListTable",
+            cols: [ [
+                {type: 'radio', fixed: "left", width: 50},
+                {field: 'meanName', title: '菜单名称', minWidth: 100, align: 'center',edit: 'text'},
+                {field: 'meanUrl', title: '菜单路径', minWidth: 100,align: 'center',edit: 'text'},
+                {field: 'roleName', title: '菜单权限', minWidth: 100,align: 'center',templet: function(d){
+                    if(d.roleName == null || d.roleName == ''){
+                        return "--- ---"
+                    }else{
+                        return d.roleName;
+                    }
+                }},
+                {field: 'isMeanCN', title: '是否显示', minWidth: 100,align: 'center', templet: function (d) {
+                    var html = '';
+                    var dictionary = [[${dictionary}]];
+                    var len = [[${dictionary.size()}]];
+                    html += ' <select name="isMean" id="isMean" lay-filter="test" data="'+ d.meanId +'" >';
+                    for(var i=0;i < len; i++){
+                        var selected = "";
+                        if(dictionary[i].dicCode == d.isMean){
+                            selected = "selected";
+                        }else{
+                            selected = ""
+                        }
+                        html += '<option value="' + dictionary[i].dicCode + '"'+ selected +'>'+ dictionary[i].dicName +'</option>';
+                    }
+                    html += ' </select>';
+                    return html;
+                }},
+                {fixed: 'right', title:'操作', toolbar: '#barDemo', align: 'center',width:110}
+            ] ]
+        });
+        //监听单元格编辑
+        table.on('edit(meanList)', function(obj){
+            var value = obj.value //得到修改后的值
+            var data = obj.data //得到所在行所有键值
+            var field = obj.field; //得到字段
+            var meanName;
+            var meanUrl;
+            var isMeanCN;
+            if(value == ''){
+                table.reload('meanListTable');
+                layer.msg("不能修改为空值！");
+                return;
+            }
+            if(field == 'meanName'){
+                meanName = value;
+            }else{
+                meanUrl = value;
+            }
+            $.ajax({
+                type: 'POST',
+                url: [[${basePath}]] + '/admin/updateMean',
+                data: {
+                    meanId : data.meanId,
+                    roleId : data.roleId,
+                    meanName : meanName,
+                    meanUrl : meanUrl
+                },
+                dataType: 'json',
+                success: function(data) {
+                    layer.msg("修改成功");
+                },
+                error: function(data) {
+                    layer.msg('您没有权限这么做');
+                },
+            });
+        });
+
+        //监听工具条
+        table.on('tool(meanList)', function(obj){
+            var data = obj.data;
+            layer.confirm('确定要删除该菜单么？', function(index){
+                $.ajax({
+                    type: 'POST',
+                    url: [[${basePath}]] + '/admin/deleteMean',
+                    data: {
+                        meanId : data.meanId,
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        obj.del();
+                        layer.close(index);
+                        layer.msg("修改成功");
+                    },
+                    error: function(data) {
+                        layer.msg('您没有权限这么做!');
+                    },
+                });
+
+            });
+        });
+
+        form.on('select(test)', function(obj){
+            var meanId = $(this).parent().parent().prev().attr("data");
+            var isMean = obj.value;
+            $.ajax({
+                type: 'POST',
+                url: [[${basePath}]] + '/admin/updateMean',
+                data: {
+                    meanId : meanId,
+                    isMean : isMean
+                },
+                dataType: 'json',
+                success: function(data) {
+                    layer.msg("修改成功");
+                },
+                error: function(data) {
+                    layer.msg('您没有权限这么做！');
+                },
+            });
+        });
+
+        //头工具栏事件
+        table.on('toolbar(meanList)', function(obj){
+            var checkStatus = table.checkStatus(obj.config.id);
+            var len = checkStatus.data.length;
+            if(obj.event == 'add'){
+                add();
+            }else if(obj.event == 'alterRole'){
+                if(len == 0){
+                    layer.msg("请选择一行数据操作");
+                    return;
+                }
+                layer.open({
+                    type: 2,
+                    area: ['300px', '350px'],
+                    fixed: false, //不固定
+                    title:"授权",
+                    maxmin: false,
+                    content: [[${basePath}]] + '/admin/meanRole',
+                    success: function (layero, index) {
+                        // 获取子页面的iframe
+                        var iframe = window['layui-layer-iframe' + index];
+                        // 向子页面的全局函数child传参
+                        iframe.getData(checkStatus.data);
+                    }
+                });
+            }
+        });
+
+
+        //搜索
+        $('#do_search').on('click', function () {
+            // 搜索条件
+            var meanName = $('#meanName').val();
+            reloadList(meanName);
+        });
+        //重置
+        $('#do_clear').on('click', function () {
+            // 搜索条件
+            $('#meanName').val("");
+            reloadList("");
+        });
+
+        function reloadList(meanName){
+            console.log(meanName);
+            tableIns = table.reload('meanListTable', {
+                method: 'post'
+                , where: {
+                    'meanName': meanName,
+                }
+                , page: {
+                    curr: 1
+                }
+            });
+        }
+
+    })
+
+    function add(){
+        layer.open({
+            type: 2,
+            area: ['700px', '450px'],
+            fixed: false, //不固定
+            title:"新增菜单",
+            maxmin: true,
+            content: [[${basePath}]] + '/admin/addMean'
+        });
+    }
+
+</script>
+</html>

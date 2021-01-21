@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>二维码生成</title>
+</head>
+<body>
+<div id="example">
+    <p>Original message: "{{ message }}"</p>
+</div>
+<script src="/static/js/vue.js"></script>
+<script>
+    var data = {a : 1}
+    var vm = new Vue({
+        el: '#example',
+        data: {
+            message: data
+        },
+    })
+</script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.springframework.org/schema/data/jaxb">
+<head>
+    <meta charset="UTF-8">
+    <title>修改密码</title>
+    <link rel="stylesheet" th:href="|${basePath}/static/layui/css/layui.css|" media="all" />
+    <script th:src="|${basePath}/static/js/jquery.min.js?v=2.1.4|"></script>
+    <script type="text/javascript" th:src="|${basePath}/static/layui/layui.js|"></script>
+    <script type="text/javascript" th:src="|${basePath}/static/js/jquery.md5.js|"></script>
+</head>
+<body>
+<form class="layui-form" id="userForm">
+    <input type="hidden" name="userId" id="userId" th:value="${userId}">
+    <div class="layui-form-item" style="padding-top: 20px">
+        <label class="layui-form-label">新密码：</label>
+        <div class="layui-input-block" style="width: 75%">
+            <input type="password" id="userPwd" name="userPwd"  autocomplete="off" placeholder="请输入新密码" class="layui-input">
+            <img th:src="|${basePath}/static/image/eye.jpg|" style="width: 25px;float: right;margin-top: -27px;margin-right: 8px;cursor: pointer" onmousedown="mousedown(this)" onmouseup="mouseup(this)">
+        </div>
+    </div>
+    <div class="layui-form-item" style="padding-top: 20px">
+        <label class="layui-form-label">确认密码：</label>
+        <div class="layui-input-block" style="width: 75%">
+            <input type="password" id="userPwd1" name="userPwd1"  autocomplete="off" placeholder="请输入新密码" class="layui-input">
+            <img th:src="|${basePath}/static/image/eye.jpg|" style="width: 25px;float: right;margin-top: -27px;margin-right: 8px;cursor: pointer" onmousedown="mousedown(this)" onmouseup="mouseup(this)">
+        </div>
+    </div>
+    <div style="position: fixed;bottom: 20px;text-align: center;width: 100%;">
+        <input type="button" class="layui-btn" onclick="save();" value="保存"></input>
+    </div>
+</form>
+<script>
+    var index = parent.layer.getFrameIndex(window.name); //获取窗口索引
+    layui.use(['jquery','layer','form'],function(){
+        var $=layui.jquery
+            ,layer=layui.layer
+            ,form=layui.form
+    });
+
+    function mousedown(obj) {
+       $(obj).prev().attr("type","text");
+    }
+
+    function mouseup(obj) {
+        $(obj).prev().attr("type","password");
+    }
+    
+    function save(){
+        var userPwd = $("#userPwd").val();
+        if(userPwd == ''){
+            layer.msg("请输入新密码");
+            $("#userPwd").focus();
+            return;
+        }
+        var userPwd1 = $("#userPwd1").val();
+        if(userPwd != userPwd1){
+            layer.msg("两次输入的密码不一致");
+            return;
+        }
+        //固定盐1a2b3c
+        $("#userPwd").val($.md5(userPwd + "1a2b3c"));
+        $.ajax({
+            type: 'POST',
+            url: '[[${basePath}]]/computerInfo/userResetPwd',
+            data: $('#userForm').serialize(),
+            dataType: 'json',
+            success: function(data) {
+                if(data.success) {
+                    layer.msg("密码修改成功");
+                    setTimeout(function(){
+                        parent.window.location.reload();
+                        parent.layer.close(index);
+                        }, 1000);
+                }else{
+                    if(data.message != null && data.message !=''){
+                        layer.msg(data.message);
+                    }else{
+                        layer.msg("修改失败");
+                    }
+
+                }
+            },
+            error: function(data) {
+                layer.msg('连接超时！');
+            },
+        });
+    }
+</script>
+</body>
+</html>

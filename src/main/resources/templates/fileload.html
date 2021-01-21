@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>上传附件</title>
+    <link rel="stylesheet" th:href="|${basePath}/static/layui/css/layui.css|" media="all" />
+    <link href="/static/css/iconfont.css" rel="stylesheet" type="text/css"/>
+    <link href="/static/css/fileUpload.css" rel="stylesheet" type="text/css">
+</head>
+<body>
+<form class="layui-form" id="atta" enctype="multipart/form-data">
+    <div class="layui-form-item" style="padding-top: 17px">
+        <label class="layui-form-label">附件类型：</label>
+        <div class="layui-input-block" style="width: 75%">
+            <select name="fileType" id="fileType">
+                <option th:each="dictionary : ${dictionary1}" th:value="${dictionary?.dicCode}" th:text="${dictionary?.dicName}"></option>
+            </select>
+        </div>
+    </div>
+    <div class="layui-form-item" style="padding-top: 17px">
+        <label class="layui-form-label">文件夹：</label>
+        <div class="layui-input-block" style="width: 75%">
+            <select name="fileFlod" id="fileFlod">
+                <option th:each="dictionary : ${dictionary2}" th:value="${dictionary?.dicCode}" th:text="${dictionary?.dicName}"></option>
+            </select>
+        </div>
+    </div>
+
+    <!--创建一个文件上传的容器-->
+    <div class="layui-form-item" style="padding-top: 17px">
+        <div class="layui-input-block" style="width: 75%">
+            <div id="fileUploadContent" class="fileUploadContent"></div>
+        </div>
+    </div>
+</form>
+<script th:src="|${basePath}/static/js/jquery.min.js?v=2.1.4|"></script>
+<script type="text/javascript" th:src="|${basePath}/static/layui/layui.js|"></script>
+<script type="text/javascript" src="/static/js/fileUpload.js"></script>
+<script >
+    var index = parent.layer.getFrameIndex(window.name); //获取窗口索引
+    layui.use(['jquery','layer','form'],function(){
+        var $=layui.jquery
+            ,layer=layui.layer
+            ,form=layui.form
+    });
+
+    let wfu = new WpFileUpload("fileUploadContent");
+    wfu.initUpload({
+        "uploadUrl":"/file/fileUpload.do",//上传文件信息地址
+        "progressUrl":"#",//获取进度信息地址，可选，注意需要返回的data格式如下（{bytesRead: 102516060, contentLength: 102516060, items: 1, percent: 100, startTime: 1489223136317, useTime: 2767}）
+        "beforeUpload": beforeUploadFun, //在上传前执行的函数
+        "onUpload" : onUploadFun,
+    });
+
+
+    function success(){
+        wfu.uploadSuccess();
+    }
+
+    function fail(index){
+        wfu.uploadError(index);
+    }
+
+
+    function beforeUploadFun(){
+        wfu.otherData = wfu.getFormDataOfUploadFile("atta");
+    }
+    function onUploadFun(){
+        var data = wfu.resultData;
+        if(data.success){
+            success();
+            parent.window.location.reload();
+        }else{
+            layer.msg("文件类型不正确")
+            fail(data.index);
+        }
+
+    }
+</script>
+</body>
+</html>

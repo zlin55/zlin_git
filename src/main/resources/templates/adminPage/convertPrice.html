@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.springframework.org/schema/data/jaxb">
+<head>
+    <meta charset="UTF-8">
+    <title>售价</title>
+    <link rel="stylesheet" th:href="|${basePath}/static/layui/css/layui.css|" media="all" />
+    <script th:src="|${basePath}/static/js/jquery.min.js?v=2.1.4|"></script>
+    <script type="text/javascript" th:src="|${basePath}/static/layui/layui.js|"></script>
+    <script type="text/javascript" th:src="|${basePath}/static/js/jquery.md5.js|"></script>
+</head>
+<body>
+<form class="layui-form" id="computerForm">
+    <input type="hidden" name="conId" id="conId" th:value="${conId}">
+    <input type="hidden" name="comZhuangTai" id="comZhuangTai"  value="9">
+  <!--  <div class="layui-form-item" style="padding-top: 20px">
+        <label class="layui-form-label">收价：</label>
+        <div class="layui-input-block" style="width: 75%">
+            <input type="text"   readonly="readonly" th:value="${comBugPrice}"   lay-verify="required" autocomplete="off"   class="layui-input">
+        </div>
+        <label class="layui-form-label">售价:</label>
+        <div class="layui-input-block" style="width: 75%">
+            <input type="text" id="comSolePrice" oninput = "value=value.replace(/[^\d]/g,'')" maxlength="5"   name="comSolePrice"  lay-verify="required" autocomplete="off"    placeholder="请输入售价" class="layui-input">
+        </div>
+        <div style="position: fixed;bottom: 20px;text-align: center;width: 100%;">
+            <input type="button" class="layui-btn" onclick="save();" value="保存"></input>
+        </div>
+    </div>-->
+
+    <div class="layui-form-item" style="padding-top: 17px">
+        <label class="layui-form-label">收购价格：</label>
+        <div class="layui-input-block" style="width: 75%">
+            <input type="text"   readonly="readonly"  name="comBugPrice" th:value="${comBugPrice}" id="comBugPrice"   lay-verify="required" autocomplete="off"   class="layui-input">
+        </div>
+    </div>
+
+    <div class="layui-form-item" style="padding-top: 17px">
+        <label class="layui-form-label">电脑备注：</label>
+        <div class="layui-input-block" style="width: 75%">
+            <input type="text"  maxlength="40"    th:value="${comWaiGuan}"  readonly="readonly" lay-verify="required" autocomplete="off"    placeholder="请输入电脑备注" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item" style="padding-top: 17px">
+        <label class="layui-form-label">实际外观：</label>
+        <div class="layui-input-block" style="width: 75%">
+            <input type="text"  maxlength="100"  id="comShiJiWaiGuan" name="comShiJiWaiGuan"   lay-verify="required" autocomplete="off"    placeholder="请输入电脑实际外观" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item" style="padding-top: 17px">
+        <label class="layui-form-label">扣款钱数：</label>
+        <div class="layui-input-block" style="width: 75%">
+            <input type="text" id="comZheJia" oninput = "value=value.replace(/[^\d]/g,'')" maxlength="5"   name="comZheJia"  lay-verify="required" autocomplete="off"    placeholder="请输入应扣除的钱数" class="layui-input">
+        </div>
+    </div>
+    <div style="position: fixed;bottom: 20px;text-align: center;width: 100%;" >
+        <input type="button" class="layui-btn" onclick="save();" value="保存"></input>
+    </div>
+
+</form>
+
+<script>
+    var index = parent.layer.getFrameIndex(window.name); //获取窗口索引
+    layui.use(['jquery','layer','form'],function(){
+        var $=layui.jquery
+            ,layer=layui.layer
+            ,form=layui.form
+    });
+
+    function save(){
+        var comZheJia = $("#comZheJia").val();
+        var  comBugPrice=$("#comBugPrice").val();
+        var comWaiGuan  =$("#comWaiGuan").val();
+        var  comShiJiWaiGuan=$("#comShiJiWaiGuan").val();
+        if(comShiJiWaiGuan == ""){
+            layer.msg("请输入电脑的实际外观");
+            return;
+        }
+
+        if(comZheJia == ""){
+            layer.msg("请输入电脑输入应扣除的钱数");
+            return;
+        }
+        if (comZheJia*1>comBugPrice*1) {
+            layer.msg("应扣除的钱数不能不能大于收购价！");
+            return;
+        }
+        $.ajax({
+            type: 'POST',
+            url: '[[${basePath}]]/computerInfo/ditPricew',
+            data: $('#computerForm').serialize(),
+            dataType: 'json',
+            success: function(data) {
+                if(data.result) {
+                    layer.msg("折价成功！");
+                    setTimeout(function(){
+                        parent.parent.changgeYuE();
+                        parent.window.location.reload();
+                        parent.layer.close(index);
+                        }, 1000);
+
+                }else{
+                    layer.msg("折价失败");
+                }
+            },
+            error: function(data) {
+                layer.msg('连接超时！');
+            },
+        });
+    }
+</script>
+</body>
+</html>

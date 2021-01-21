@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>新增菜单</title>
+    <link rel="stylesheet" th:href="|${basePath}/static/layui/css/layui.css|" media="all" />
+    <script th:src="|${basePath}/static/js/jquery.min.js?v=2.1.4|"></script>
+    <script type="text/javascript" th:src="|${basePath}/static/layui/layui.js|"></script>
+    <script type="text/javascript" th:src="|${basePath}/static/js/jquery.md5.js|"></script>
+</head>
+<body>
+<form class="layui-form" id="userForm">
+    <input type="hidden" name="userPwd" id="userPwd">
+    <div class="layui-form-item" style="padding-top: 20px">
+        <label class="layui-form-label">用户名称：</label>
+        <div class="layui-input-block" style="width: 75%">
+            <input type="text" id="userName" name="userName"  autocomplete="off" placeholder="请输用户名称" class="layui-input">
+        </div>
+    </div>
+    <div class="layui-form-item" style="padding-top: 17px">
+        <label class="layui-form-label">用户角色：</label>
+        <div class="layui-input-block" style="width: 75%">
+            <select id="userRole" name="userRole" >
+                <option th:each=" dictionary : ${dictionary}" th:value="${dictionary.dicCode}" th:text="${dictionary.dicName}"></option>
+            </select>
+        </div>
+    </div>
+    <div style="position: fixed;bottom: 20px;text-align: center;width: 100%;">
+        <input type="button" class="layui-btn" onclick="add();" value="保存"></input>
+    </div>
+</form>
+<script>
+    var index = parent.layer.getFrameIndex(window.name); //获取窗口索引
+    layui.use(['jquery','layer','form'],function(){
+        var $=layui.jquery
+            ,layer=layui.layer
+            ,form=layui.form
+    });
+
+    function add(){
+        var userName = $("#userName").val();
+        if(userName == ''){
+            layer.msg("请输入用户名称");
+            $("#userName").focus();
+            return;
+        }
+        $("#userPwd").val($.md5("1234561a2b3c"));
+        $.ajax({
+            type: 'POST',
+            url: '[[${basePath}]]/admin/formUser',
+            data: $('#userForm').serialize(),
+            dataType: 'json',
+            success: function(data) {
+                if(data.success) {
+                    parent.window.location.reload();
+                    parent.layer.close(index);
+                }else{
+                    if(data.message != null && data.message !=''){
+                        layer.msg(data.message);
+                    }else{
+                        layer.msg("新增失败");
+                    }
+
+                }
+            },
+            error: function(data) {
+                layer.msg('连接超时！');
+            },
+        });
+    }
+</script>
+</body>
+</html>

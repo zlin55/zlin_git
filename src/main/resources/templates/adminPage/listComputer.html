@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.springframework.org/schema/jdbc">
+<head>
+    <meta charset="UTF-8">
+    <title>电脑列表（boss端）</title>
+    <link rel="stylesheet" th:href="|${basePath}/static/layui/css/layui.css|" media="all" />
+    <script th:src="|${basePath}/static/js/jquery.min.js?v=2.1.4|"></script>
+    <script type="text/javascript" th:src="|${basePath}/static/layui/layui.js|"></script>
+    <script type="text/javascript" th:src="|${basePath}/static/js/jquery.md5.js|"></script>
+    <style>
+        .laytable-cell-1-0-2{overflow: visible !important;}
+        /* 使得下拉框与单元格刚好合适 */
+        td .layui-form-select{margin-top: -10px;margin-left: -15px;margin-right: -15px;}
+        .layui-form-select .layui-input { text-align: center;}
+    </style>
+</head>
+<body>
+<div style="padding-top: 12px;padding-left: 13px;padding-bottom: 10px;">
+    <label>电脑名字：</label>
+    <div class="layui-inline">
+        <input class="layui-input" name="conXinghao" id="conXinghao" placeholder="前后匹配模糊查询"autocomplete="off">
+    </div>
+
+    <label>收购人：</label>
+    <div class="layui-inline">
+        <input class="layui-input" name="createUserName" id="createUserName" autocomplete="off">
+    </div>
+
+    <label>起始时间：</label>
+    <div class="layui-inline" style="width: 150px">
+        <input class="layui-input" name="startTime" id="startTime" autocomplete="off">
+    </div>
+
+    <label>终止时间：</label>
+    <div class="layui-inline" style="width: 150px">
+        <input class="layui-input" name="endTime"  id="endTime" autocomplete="off">
+    </div>
+
+    <label>电脑状态：</label>
+    <div class="layui-inline">
+        <select id="comZhuangTai" name="comZhuangTai"   style="height: 30px;font-size: 16px">
+            <option value="100" >全部</option>
+            <option th:each=" dictionary : ${dictionary}" th:value="${dictionary.dicCode}" th:text="${dictionary.dicName}"></option>
+        </select>
+    </div>
+    <button class="layui-btn" id="do_search">查询</button>
+    <button class="layui-btn layui-btn-primary" id="do_clear">重置</button>
+</div>
+<table id="computerList" lay-filter="computerList"></table>
+<script type="text/html" id="barDemo">
+
+  <!--  电脑状态（0 已售 1 退单 2 退货 4 在架 5 待付款 6 已付款）7报废 8buzhidao  9折价-->
+    {{# if (d.comZhuangTai =="5"){}}
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="com_giveMoney">付款</a>
+    {{#}}}
+    {{# if (d.comZhuangTai =="9"){}}
+         <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="com_zhejiagiveMoney">已还款</a>
+     {{#}}}
+    {{# if (d.comZhuangTai =="4"){}}
+      <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="com_sole">出售</a>
+      <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="com_broken">报废</a>
+    {{#}}}
+
+      {{# if (d.comZhuangTai =="1"||d.comZhuangTai =="2"){}}
+      <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="repayment">已还款</a>
+      <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="reducing">还原状态</a>
+      {{#}}}
+
+      {{# if (d.comZhuangTai =="10"){}}
+         <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="ruku">入库</a>
+      {{#}}}
+
+    <a class="layui-btn layui-btn-danger layui-btn-xs" lay-event="com_del">删除</a>
+</script>
+<script type="text/html" id="toolbarDemo">
+    <div class="layui-btn-container">
+        <button class="layui-btn layui-btn-sm" lay-event="editComputer">编辑查看电脑</button>
+    </div>
+</script>
+</body>
+
+<script th:inline="javascript">
+    layui.use(['form','table','laydate'], function() {
+        var table = layui.table, form = layui.form,
+            laydate = layui.laydate;
+        laydate.render({
+            elem: '#startTime' //指定元素
+        });
+        laydate.render({
+            elem: '#endTime' //指定元素
+        })
+        //电脑列表
+        table.render({
+            elem: '#computerList',
+            url: [[${basePath}]] + '/computerInfo/listData',
+            toolbar: '#toolbarDemo',
+            page: true,
+            height: 'full-85',
+            limits: [10, 15, 50, 70],
+            limit: 50,
+            id: "computerListTable",
+            cols: [ [
+                {type: 'radio', fixed: "left", width: 30},
+          /*      {type: 'conId',title: '序号', minWidth: 20, align: 'center'},*/
+                {field: 'conId', title: '序号', minWidth: 30, align: 'center'},
+                {field: 'conXinghao', title: '电脑名字', minWidth: 120, align: 'center', templet: function (d) {
+                        var html = '';
+                        var dictionary = [[${diannaopinpai}]];
+                        var len = [[${diannaopinpai.size()}]];
+                        for(var i=0;i < len; i++){
+                            if(dictionary[i].dicCode == d.comPinPai) {
+                                html=dictionary[i].dicName+d.conXinghao+":"+d.comNeiCun;
+                            }
+                        }
+                        return html;
+                    }},
+               /* {field: 'comYunDan', title: '货运单号', minWidth: 50, align: 'center'},*/
+                {field: 'comCpu', title: '电脑cpu', minWidth: 30, align: 'center'},
+                {field: 'comXianKa', title: '电脑显卡', minWidth: 30, align: 'center'},
+               /* {field: 'comXuLie', title: '序列', minWidth: 50, align: 'center'},*/
+                {field: 'comBugPrice', title: '购买价格', minWidth: 50, align: 'center'},
+                {field: 'comSolePrice', title: '售出价格', minWidth: 50, align: 'center',templet: function (d) {
+                        var html = '';
+                        if(d.comSolePrice!= null&&d.comSolePrice!="") {
+                            html=d.comSolePrice;
+                        }else{
+                            html="---";
+                        }
+                        return html;
+                    }},
+                {field: 'createDateStr', title: '购买时间', minWidth: 180, align: 'center'},
+                {field: 'createUserName', title: '负责人', minWidth: 70, align: 'center'},
+                {field: 'comZhuangTai', title: '电脑状态', minWidth: 70, align: 'center', templet: function (d) {
+                        var html = '';
+                        var dictionary = [[${dictionary}]];
+                        var len = [[${dictionary.size()}]];
+                        for(var i=0;i < len; i++){
+                            if(dictionary[i].dicCode == d.comZhuangTai) {
+                                html=dictionary[i].dicName;
+                            }
+                        }
+                        return html;
+                    }},
+                {field: 'comSolePrice', title: '利润', minWidth: 50, align: 'center',templet: function (d) {
+                        var html = '';
+                        if(d.comSolePrice!= null&&d.comSolePrice!="") {
+                            html=d.comSolePrice-d.comBugPrice;
+                        }else{
+                            html="---";
+                        }
+                        return html;
+                    }},
+                {field: 'comWaiGuan', title: '备注', minWidth: 180, align: 'center'},
+           /*     {fixed: 'comWaiGuan', title:'备注',align: 'center',width:80},*/
+                {fixed: 'right', title:'操作', toolbar: '#barDemo', align: 'center',width:220}
+            ] ]
+        });
+
+
+        //头工具栏事件
+        table.on('toolbar(computerList)', function(obj){
+            if(obj.event == 'editComputer'){
+                var checkStatus = table.checkStatus(obj.config.id);
+                var len = checkStatus.data.length;
+                if(len == 0){
+                    layer.msg("请选择一行数据操作");
+                    return;
+                }
+                layer.open({
+                    type: 2,
+                    area: ['900px', '550px'],
+                    fixed: false, //不固定
+                    title: "编辑查看电脑 ",
+                    maxmin: false,
+                    content: [[${basePath}]] + '/computerInfo/editBoss?id='+  checkStatus.data[0].conId
+                })
+            }
+        })
+        //监听工具条
+        table.on('tool(computerList)', function(obj){
+            var data = obj.data;
+            var event  = obj.event;
+            var name = '';
+            var dictionary = [[${diannaopinpai}]];
+            var len = [[${diannaopinpai.size()}]];
+            for(var i=0;i < len; i++){
+                if(dictionary[i].dicCode == data.comPinPai) {
+                    name=dictionary[i].dicName+data.conXinghao;
+                }
+            }
+            var  str="";
+            var  comZhuangTai=obj.data.comZhuangTai;
+            var isvalue="1";
+            if(event=="com_del"){
+                str="确定要删除"+name+"么？";
+                isvalue="0";
+            }else if(event=="com_giveMoney"){
+                str="确认价格为"+data.comBugPrice+"元的"+name+"已经付款?";
+                var  comZhuangTai="6";
+            }
+            else if(event=="com_zhejiagiveMoney"){
+                str=""+name+"因外观描述不符合事实而降价"+data.comZheJia+"元，确认客服已经返还？";
+                var  comZhuangTai="4";
+            }
+            else if(event=="com_sole"){
+                str="确认"+name+"已经找到买家？";
+                layer.open({
+                    type: 2,
+                    area: ['500px', '300px'],
+                    fixed: false, //不固定
+                    title: "输入"+name+"售价",
+                    maxmin: false,
+                    content: [[${basePath}]] + '/computerInfo/editSolePrice?id='+ data.conId+'&price='+data.comBugPrice
+                })
+                return;
+            }
+            else if(event=="com_broken"){
+                str="确认"+name+"已经没救了准备报废？"
+                var  comZhuangTai="7";
+            }else  if(event=="ruku"){
+                str="确认"+name+"验收完毕？"
+                var  comZhuangTai="4";
+            }else if(event=="reducing"){
+                str="确认"+name+"还原到已付款状态？"
+                var  comZhuangTai="6";
+            }
+            else if(event=="repayment"){
+                str=""+name+"因为某些原因没成功，确认收购价格"+data.comBugPrice+"元的款项，客服已经返还？"
+                var  comZhuangTai="8";
+            }
+            layer.confirm(str, function(index){
+                $.ajax({
+                    type: 'POST',
+                    url: [[${basePath}]] + '/computerInfo/save',
+                    data: {
+                        conId : data.conId,
+                        comZhuangTai:comZhuangTai,
+                        isvalue:isvalue
+                    },
+                    dataType: 'json',
+                    success: function(data) {
+                        if(data.result=="success"){
+                            layer.close(index);
+                            layer.msg("操作成功");
+                        }else{
+                            layer.msg("修改失败");
+                        }
+                        setTimeout(function(){reloadList(); }, 1000);
+
+                    },
+                    error: function(data) {
+                        layer.msg('您没有权限这么做！');
+                    },
+                });
+
+            });
+        });
+        //搜索
+        $('#do_search').on('click', function () {
+            // 搜索条件
+            var  conXinghao =$("#conXinghao").val();
+            var createUserName = $('#createUserName').val();
+            var startTime=$('#startTime').val();
+            var endTime =$('#endTime').val();
+            var comZhuangTai = $("#comZhuangTai").val();
+
+            reloadList(conXinghao,createUserName,startTime,endTime,comZhuangTai);
+        });
+        //重置
+        $('#do_clear').on('click', function () {
+            // 搜索条件
+            $('#conXinghao').val("");
+            $('#createUserName').val("");
+            $('#startTime').val("");
+            $('#endTime').val("");
+            $('#comZhuangTai').val("100");
+            tableIns = table.reload('computerListTable', {
+                method: 'post'
+                , where: {
+                    'conXinghao': "",
+                    'createUserName': "",
+                    'startTime': "",
+                    'endTime': "",
+                    'comZhuangTai': ""
+                }
+                , page: {
+                    curr: 1
+                }
+            });
+        });
+
+        function reloadList(conXinghao,createUserName,startTime,endTime,comZhuangTai){
+             conXinghao =$("#conXinghao").val();
+             createUserName = $('#createUserName').val();
+             startTime=$('#startTime').val();
+             endTime =$('#endTime').val();
+             comZhuangTai = $("#comZhuangTai").val();
+            if(comZhuangTai=='100'){
+                comZhuangTai="";
+            }
+            tableIns = table.reload('computerListTable', {
+                method: 'post'
+                , where: {
+                    'conXinghao': conXinghao,
+                    'createUserName': createUserName,
+                    'startTime': startTime,
+                    'endTime': endTime,
+                    'comZhuangTai': comZhuangTai
+                }
+                , page: {
+                    curr: 1
+                }
+            });
+        }
+
+        var _tools = {
+            func1: function(){
+                conXinghao =$("#conXinghao").val();
+                createUserName = $('#createUserName').val();
+                startTime=$('#startTime').val();
+                endTime =$('#endTime').val();
+                comZhuangTai = $("#comZhuangTai").val();
+                if(comZhuangTai=='100'){
+                    comZhuangTai="";
+                }
+                tableIns = table.reload('computerListTable', {
+                    method: 'post'
+                    , where: {
+                        'conXinghao': conXinghao,
+                        'createUserName': createUserName,
+                        'startTime': startTime,
+                        'endTime': endTime,
+                        'comZhuangTai': comZhuangTai
+                    }
+                    , page: {
+                        curr: 1
+                    }
+                });
+            }
+        };
+        window.tools = _tools;
+
+    })
+
+</script>
+</html>
